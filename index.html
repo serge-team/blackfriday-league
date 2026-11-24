@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لیگ بلک‌فرایدی • فروش زنده ۱۱ فروشگاه</title>
+<style>
+@font-face{font-family:"Vazirmatn";src:url("fonts/Vazirmatn-Regular.ttf");font-weight:400}
+@font-face{font-family:"Vazirmatn";src:url("fonts/Vazirmatn-Bold.ttf");font-weight:700}
+:root{
+--bg:#F6F4EF; --card:#fff; --ink:#141414; --muted:#70767F; --line:#EAE4D8;
+--black:#0D0D0F; --black2:#1A1A1E; --gold:#F5B301; --gold-soft:#FFF3C4;
+--green:#0E9F6E; --green-soft:#DDF5E9; --red:#E5484D; --red-soft:#FDE6E6;
+--blue:#2563EB;
+--r:16px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:"Vazirmatn",system-ui;background:var(--bg);color:var(--ink);line-height:1.8}
+.wrap{max-width:680px;margin:0 auto;padding:0 14px 90px}
+/* header */
+.hero{background:var(--black);color:#fff;border-radius:0 0 24px 24px;padding:20px 18px 18px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-40px -20px auto -20px;height:180px;background:radial-gradient(420px 140px at 70% 0%,rgba(245,179,1,.28),transparent 70%);pointer-events:none}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative}
+.brand{display:flex;align-items:center;gap:10px}
+.bag{width:42px;height:42px;border-radius:13px;background:var(--gold);display:grid;place-items:center;font-size:22px;flex:none}
+.brand h1{font-size:19px;margin:0;line-height:1.4}
+.brand p{margin:0;font-size:12px;color:#CFCFD6}
+.live{display:flex;align-items:center;gap:7px;background:#1F1F23;border:1px solid #333;border-radius:999px;padding:6px 12px;font-size:12px;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@media(prefers-reduced-motion:reduce){.dot{animation:none}}
+.totals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;position:relative}
+.kpi{background:#17171B;border:1px solid #2A2A30;border-radius:var(--r);padding:10px 12px}
+.kpi small{display:block;color:#A9ABB3;font-size:12px}
+.kpi b{font-size:19px;color:#fff}
+.kpi em{font-style:normal;font-size:12px;color:var(--gold-soft)}
+.kpi.gold{background:linear-gradient(135deg,#F5B301,#FFD84D);border-color:#F5B301}
+.kpi.gold small,.kpi.gold b,.kpi.gold em{color:#1A1A1A}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:12px;color:#C9CAD1;position:relative}
+.meta span{background:#1E1E24;border:1px solid #2E2E36;border-radius:999px;padding:4px 10px}
+/* podium */
+.podium{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-top:-14px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.podium h2,.sec h2{font-size:15px;margin:0 0 10px}
+.pods{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;align-items:end;text-align:center}
+.pod{border-radius:16px;padding:10px 6px;border:1px solid var(--line);background:#FFFEFA}
+.pod.first{background:linear-gradient(180deg,#FFF7D6,#fff);border-color:#EBBE2E;order:2;padding-top:14px}
+.pod.second{order:1}.pod.third{order:3}
+.crown{font-size:22px;line-height:1}
+.pod .nm{font-weight:700;font-size:13px;margin-top:4px}
+.pod .vl{font-weight:700;font-size:14px;color:#111}
+.pod .sm{font-size:11px;color:var(--muted)}
+.medal{display:inline-block;min-width:26px;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;margin-top:6px}
+.m1{background:var(--gold)} .m2{background:#E5E7EB} .m3{background:#F3C9A0}
+/* controls */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-top:12px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.tab{flex:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-family:inherit;font-size:13px;cursor:pointer}
+.tab.on{background:#111;color:#fff;border-color:#111}
+.tab:focus-visible,.row:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.search{margin-top:10px;display:flex;gap:8px}
+.search input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-family:inherit;font-size:14px;background:#FFFEFB}
+.hint{font-size:12px;color:var(--muted);margin:8px 2px 0}
+/* league rows */
+#league{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.row{background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:start}
+.rank{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-weight:700;background:#F3F0E9;font-size:16px}
+.r1{background:var(--gold)} .r2{background:#E5E7EB} .r3{background:#EDC39A}
+.rise{font-size:11px;text-align:center;color:var(--muted);margin-top:2px}
+.up{color:var(--green)} .down{color:var(--red)}
+.store{font-weight:700;font-size:14px;line-height:1.5}
+.city{font-size:12px;color:var(--muted);font-weight:400}
+.net{font-weight:700;font-size:16px;text-align:end;white-space:nowrap}
+.net small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;grid-column:1/-1}
+.badge{font-size:12px;border-radius:999px;padding:3px 10px;background:#F6F4EF;border:1px solid var(--line);white-space:nowrap}
+.badge.off{background:#FFF6DE;border-color:#EDC95A}
+.badge.cnt{background:#EEF6FF;border-color:#BFD6FF}
+.badge.avg{background:#F0FDF4;border-color:#A7E3C5}
+.bar{grid-column:1/-1;height:8px;background:#F0ECE2;border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#FF7A00);border-radius:999px;transition:width .8s}
+.goal{grid-column:1/-1;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.flash{animation:flash 1s}
+@keyframes flash{0%{background:#FFF4C2}100%{background:#fff}}
+/* share */
+.share{position:fixed;bottom:12px;left:12px;right:12px;max-width:656px;margin:0 auto;display:flex;gap:8px;z-index:5}
+.btn{flex:1;border:0;border-radius:14px;padding:13px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.btn.wa{background:#22C55E;color:#fff}
+.btn.copy{background:#111;color:#fff}
+details.how{margin-top:12px;background:#0F0F12;color:#E7E7EA;border-radius:18px;padding:14px;font-size:13px}
+details.how summary{cursor:pointer;font-weight:700;color:var(--gold)}
+details.how ol{margin:8px 0 0;padding-inline-start:18px}
+code{background:#22232A;padding:1px 6px;border-radius:6px;font-size:12px}
+.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:14px}
+@media(min-width:700px){.totals{grid-template-columns:repeat(4,1fr)}.net{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="hero">
+<div class="wrap" style="padding-bottom:0">
+<div class="topbar">
+<div class="brand"><div class="bag">🛍️</div><div><h1>لیگ بلک‌فرایدی</h1><p>۱۱ فروشگاه پوشاک • جدول زنده فروش</p></div></div>
+<div class="live"><span class="dot"></span> زنده • <span id="clock">--:--</span></div>
+</div>
+<div class="totals">
+<div class="kpi"><small>تعداد فاکتور امروز</small><b id="kCount">—</b><em id="kCountSub"></em></div>
+<div class="kpi"><small>فروش ناخالص (قبل تخفیف)</small><b id="kGross">—</b><em>تومان</em></div>
+<div class="kpi gold"><small>فروش خالص (نهایی)</small><b id="kNet">—</b><em>تومان</em></div>
+<div class="kpi"><small>میانگین تخفیف</small><b id="kOff">—</b><em id="kAvg"></em></div>
+</div>
+<div class="meta"><span id="updated">آخرین به‌روزرسانی: —</span><span>⏱️ پایان امروز ساعت ۲۳:۵۹</span><span>📱 مخصوص موبایل • بدون نصب</span></div>
+</div>
+</div>
+<div class="wrap">
+<div class="podium"><h2>🏆 سه صدرنشین الان</h2><div class="pods" id="pods"></div></div>
+<div class="sec">
+<h2>📊 جدول لیگ — <span id="countLine"></span></h2>
+<div class="tabs" role="tablist">
+<button class="tab on" data-sort="net">👑 بر اساس فروش خالص</button>
+<button class="tab" data-sort="invoices">🧾 بیشترین تعداد فاکتور</button>
+<button class="tab" data-sort="off">🎁 بیشترین تخفیف</button>
+<button class="tab" data-sort="basket">🛒 بالاترین میانگین سبد</button>
+</div>
+<div class="search"><input id="q" placeholder="جست‌وجوی فروشگاه یا شهر… مثلاً مشهد" aria-label="جست‌وجو"></div>
+<p class="hint">روی هر ردیف بزنید تا جزئیات (ناخالص / خالص / تخفیف / سبد خرید / درصد تا هدف) را ببینید. جدول هر ۶۰ ثانیه خودکار تازه می‌شود.</p>
+<div id="league"></div>
+</div>
+<details class="how">
+<summary>⚙️ این پنل چطور به ERP ما وصل می‌شود؟ (برای IT — سه قدم)</summary>
+<ol>
+<li>از ERP همان خروجی همیشگی را بگیرید: <code>جدول_گزارش_فروش_و_مرجوعی_*.xlsx</code> — هیچ ستونی را پاک نکنید.</li>
+<li>روی سیستم خودتان: <code>python erp_to_league.py خروجی.xlsx --out data.json</code> را بزنید و فایل <code>data.json</code> کنار همین صفحه را جایگزین کنید.</li>
+<li>همین پوشه را دوباره روی همان هاست آپلود کنید (فقط <code>data.json</code> عوض شده) و لینک ثابت را در واتساپ پین کنید.</li>
+</ol>
+</details>
+<div class="footer">داده واقعی ۱۴۰۵/۰۹/۰۲ • جمع خالص ۲۰٫۱۲ میلیارد • ۲۲۶ فاکتور • رفرش خودکار هر ۶۰ ثانیه</div>
+</div>
+<div class="share">
+<button class="btn wa" id="waBtn">📤 ارسال صدر جدول در واتساپ</button>
+<button class="btn copy" id="copyBtn">کپی خلاصه</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
