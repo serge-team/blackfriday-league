@@ -34,13 +34,25 @@ function sortModels(list){
 }
 let LAST_UPDATE=null;
 let LEAGUE_DATE='';
-async function fetchData(){
- try{
-  const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});
+async function loadOne(url){
+  const r=await fetch(url+'?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok) return null;
   const lm=r.headers.get('last-modified');
   const j=await r.json();
+  return {j,lm};
+}
+async function fetchData(){
+ try{
+  const base=await loadOne('data.json');
+  // فایل زنده: فقط امروز (اختیاری، اگر نباشد سایت با همان پایه کار می‌کند)
+  let live=null;
+  try{ live=await loadOne('data-live.json'); }catch(e){ live=null; }
+  let lm=base&&base.lm, j=base&&base.j;
+  let lj=live&&live.j;
+  if(!j&&!lj){ return; }
+  if(!j&&lj){ j=lj; lm=live&&live.lm; live=null; lj=null; } // فقط فایل زنده موجود است
   if(Array.isArray(j)){ DATA=j; LAST_UPDATE=lm?new Date(lm):null; }
-  else{
+  else if(j){
    DATA=(j.stores||j.data||[]);
    if(j.updated_at){ LAST_UPDATE=new Date(j.updated_at); } else if(lm){ LAST_UPDATE=new Date(lm); }
    // تک‌فایل v2: daily=جمع روزانه کل تاریخ، rows=جزئیات مدل روزهای اخیر
@@ -68,6 +80,32 @@ async function fetchData(){
     LEAGUE_DATE=normD(j.league_date||j.max_date||HDATES[HDATES.length-1]||'');
     DETAIL_FROM=normD(j.detail_from||'');
     DETAIL_DAYS=+(j.detail_days||0)||0;
+   }catch(e){}
+   // --- ادغام فایل زنده (data-live.json) ---
+   try{
+    if(lj&&!Array.isArray(lj)){
+      const ld=(Array.isArray(lj.daily)?lj.daily:[]).map(x=>({...x,d:normD(x.d)}));
+      const lr=(Array.isArray(lj.rows)?lj.rows:[]).map(x=>({...x,d:normD(x.d)}));
+      if(ld.length||lr.length){
+        const liveDates=new Set([...ld.map(x=>x.d),...lr.map(x=>x.d)].filter(Boolean));
+        if(liveDates.size){
+          HDAILY=HDAILY.filter(x=>!liveDates.has(x.d)).concat(ld);
+          HROWS=HROWS.filter(x=>!liveDates.has(x.d)).concat(lr);
+          const ldates=((lj.dates&&lj.dates.length?lj.dates:[...liveDates])).map(normD).filter(Boolean);
+          HDATES=[...new Set([...HDATES,...ldates])].sort();
+        }
+        const lMax=normD(lj.league_date||lj.max_date||'');
+        if(lMax&&(!LEAGUE_DATE||cmpD(lMax,LEAGUE_DATE)>=0)){
+          if(Array.isArray(lj.stores)&&lj.stores.length){ DATA=lj.stores; }
+          LEAGUE_DATE=lMax;
+        }
+        if(!DETAIL_FROM){ DETAIL_FROM=normD(lj.detail_from||''); DETAIL_DAYS=+(lj.detail_days||0)||DETAIL_DAYS; }
+        try{
+          const lu=lj.updated_at?new Date(lj.updated_at):(live&&live.lm?new Date(live.lm):null);
+          if(lu&&!isNaN(lu)&&(!LAST_UPDATE||isNaN(LAST_UPDATE)||lu>LAST_UPDATE)) LAST_UPDATE=lu;
+        }catch(e){}
+      }
+    }
    }catch(e){}
   }
  }catch(e){}
