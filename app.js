@@ -1,112 +1,129 @@
-let DATA = [];
-let prevRank = {};
-let sortKey = 'net';
-let query = '';
-const $ = s => document.querySelector(s);
-const fa = (n, d=0) => Number(n).toLocaleString('fa-IR',{maximumFractionDigits:d, minimumFractionDigits:d});
-const faMoneyShort = v => {
-  if (v >= 1e9) return fa(v/1e9, 2) + ' میلیارد';
-  if (v >= 1e6) return fa(v/1e6, 1) + ' میلیون';
-  return fa(v) + ' تومان';
-};
-const off = r => r.gross ? (1 - r.net / r.gross) * 100 : 0;
-const basket = r => r.invoices ? r.net / r.invoices : 0;
-
+let DATA=[], sortKey='net', sortDir=-1, query='', openCode=null;
+const $=s=>document.querySelector(s);
+const fa=n=>Number(n).toLocaleString('fa-IR');
+const fa1=n=>Number(n).toLocaleString('fa-IR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const M=t=>Math.round(Number(t||0)/100000); // تومان -> میلیون ریال، بدون اعشار
+const pct=r=>r.gross?(r.disc/r.gross*100):0;
+const gpct=g=>g.gross?((g.gross-g.net)/g.gross*100):0;
+const HUES=[45,205,160,285,5,30,130,190,315,95,250];
+const hue=i=>HUES[i%HUES.length];
+const SORTS=[
+ {k:'qty',t:'تعداد فروش'},{k:'inv',t:'تعداد فاکتور'},{k:'gross',t:'ناخالص'},
+ {k:'net',t:'خالص'},{k:'disc',t:'تخفیف'},{k:'pct',t:'٪ تخفیف'}
+];
 async function fetchData(){
-  try{
-    const res = await fetch('data.json?t=' + Date.now(), {cache:'no-store'});
-    DATA = await res.json();
-  }catch(e){ /* اگر فایل پیدا نشد همان قبلی می‌ماند */ }
+ try{const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});DATA=await r.json();}catch(e){}
+ DATA.forEach(r=>{r.disc=(r.gross-r.net);r.pct=r.gross?(r.disc/r.gross*100):0;(r.groups||[]).forEach(g=>{g.disc=g.gross-g.net;});});
 }
-
+function clock(){const d=new Date();const el=$('#clock');if(el)el.textContent=d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});}
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('bf-theme',t);}catch(e){}
+ const b=$('#themeBtn');if(b)b.textContent=(t==='dark'?'🌙 تاریک':'☀️ روشن');}
+function filtered(){
+ let a=[...DATA];
+ if(query){a=a.filter(r=>r.store.includes(query)||(r.groups||[]).some(g=>g.name.includes(query)));}
+ const dir=sortDir;
+ a.sort((x,y)=>{
+  let vx,vy;
+  if(sortKey==='pct'){vx=x.pct;vy=y.pct;}
+  else{vx=x[sortKey];vy=y[sortKey];}
+  return (vx-vy)*dir;
+ });
+ return a;
+}
+function renderTotals(){
+ const q=DATA.reduce((s,r)=>s+r.qty,0),iv=DATA.reduce((s,r)=>s+r.inv,0);
+ const g=DATA.reduce((s,r)=>s+r.gross,0),n=DATA.reduce((s,r)=>s+r.net,0),d=g-n,p=g?(d/g*100):0;
+ const items=[
+  {h:45,l:'تعداد فروش',v:fa(q),u:'قلم'},
+  {h:205,l:'تعداد فاکتور',v:fa(iv),u:'فاکتور'},
+  {h:160,l:'ناخالص',v:fa(M(g)),u:'میلیون ریال'},
+  {h:285,l:'خالص',v:fa(M(n)),u:'میلیون ریال'},
+  {h:5,l:'تخفیف',v:fa(M(d)),u:'میلیون ریال'},
+  {h:30,l:'٪ تخفیف',v:'٪'+fa1(p),u:'میانگین'},
+ ];
+ $('#totals').innerHTML=items.map(o=>`<div class="kpi" style="--h:${o.h}"><small>${o.l}</small><b>${o.v}</b> <span>${o.u}</span></div>`).join('');
+ $('#countLine').textContent=fa(DATA.length)+' فروشگاه';
+}
+function renderPods(){
+ const top=[...DATA].sort((a,b)=>b.net-a.net).slice(0,3);
+ const slots=[
+  {r:top[1],cls:'silver',em:'🥈',rk:'دوم'},
+  {r:top[0],cls:'gold',em:'🥇',rk:'اول'},
+  {r:top[2],cls:'bronze',em:'🥉',rk:'سوم'}
+ ];
+ $('#pods').innerHTML=slots.map(s=>{
+  const r=s.r;
+  if(!r)return '<div></div>';
+  const p=r.pct;
+  return `<div class="pod ${s.cls}"><div class="md">${s.em}</div><div class="nm">${r.store}</div><span class="rk">رتبه ${s.rk}</span>
+  <div class="grid">
+   <div class="cell"><small>تعداد فروش</small><b>${fa(r.qty)}</b></div>
+   <div class="cell"><small>تعداد فاکتور</small><b>${fa(r.inv)}</b></div>
+   <div class="cell"><small>ناخالص</small><b>${fa(M(r.gross))}</b></div>
+   <div class="cell"><small>خالص</small><b>${fa(M(r.net))}</b></div>
+   <div class="cell"><small>تخفیف</small><b>${fa(M(r.disc))}</b></div>
+   <div class="cell"><small>٪ تخفیف</small><b>٪${fa1(p)}</b></div>
+  </div><div class="tag" style="margin-top:7px;background:rgba(255,255,255,.5)">میلیون ریال</div></div>`;
+ }).join('');
+}
+function metric(label,val,hot){
+ return `<div class="m${hot?' hot':''}"><small>${label}</small><b>${val}</b></div>`;
+}
+function renderBoard(){
+ const rows=filtered();
+ // sortbar
+ $('#sortbar').innerHTML=SORTS.map(s=>`<button class="sbtn${sortKey===s.k?' on':''}" data-k="${s.k}">${s.t}${sortKey===s.k?(sortDir===-1?' ▼':' ▲'):''}</button>`).join('');
+ document.querySelectorAll('#sortbar .sbtn').forEach(b=>b.onclick=()=>{
+  const k=b.dataset.k;
+  if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}
+  renderBoard();
+ });
+ // desktop head
+ $('#headRow').innerHTML=`<div>رتبه</div><div>فروشگاه</div>`+SORTS.map(s=>`<div><button class="${sortKey===s.k?'on':''}" data-k="${s.k}">${s.t}${sortKey===s.k?(sortDir===-1?' ▼':' ▲'):''}</button></div>`).join('')+`<div></div>`;
+ document.querySelectorAll('#headRow button').forEach(b=>b.onclick=()=>{
+  const k=b.dataset.k;
+  if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}
+  renderBoard();
+ });
+ const el=$('#league');
+ if(!rows.length){el.innerHTML='<p style="color:var(--muted)">فروشگاهی پیدا نشد.</p>';return;}
+ el.innerHTML=rows.map((r,i)=>{
+  const rank=i+1,h=hue(DATA.indexOf(r));
+  const topG=(r.groups||[])[0];
+  const cells=
+   metric('تعداد فروش',fa(r.qty))+
+   metric('تعداد فاکتور',fa(r.inv))+
+   metric('ناخالص',fa(M(r.gross)))+
+   metric('خالص',fa(M(r.net)),true)+
+   metric('تخفیف',fa(M(r.disc)))+
+   metric('٪ تخفیف','٪'+fa1(r.pct));
+  const grows=(r.groups||[]).map(g=>`<div class="grow"><div class="gn">${g.name}</div><div>فروش <b>${fa(g.qty)}</b></div><div>فاکتور <b>${fa(g.inv)}</b></div><div>ناخالص <b>${fa(M(g.gross))}</b></div><div>خالص <b>${fa(M(g.net))}</b></div><div>تخفیف <b>${fa(M(g.disc))}</b></div><div>٪ <b>٪${fa1(gpct(g))}</b></div></div>`).join('');
+  return `<div class="row${openCode===r.code?' open':''}" style="--h:${h}">
+   <button class="rowhead" data-code="${r.code}">
+    <span class="rank ${rank<=3?'r'+rank:''}">${fa(rank)}</span>
+    <span class="storebox"><span class="store">${r.store}</span><br><span class="sub">${fa((r.groups||[]).length)} کارگروه • صدر: ${(topG?topG.name:'—')} • میلیون ریال</span></span>
+    <span class="mgrid">${cells}</span>
+    <span class="chev">▾</span>
+   </button>
+   <div class="drawer"><h3>📦 کارگروه ${r.store} <span class="tag">سورت بر اساس خالص • میلیون ریال</span></h3>
+    <div class="gtable"><div class="grow ghead"><div>کارگروه</div><div>تعداد فروش</div><div>تعداد فاکتور</div><div>ناخالص</div><div>خالص</div><div>تخفیف</div><div>٪</div></div>${grows}</div>
+   </div></div>`;
+ }).join('');
+ document.querySelectorAll('.rowhead').forEach(b=>b.onclick=()=>{
+  const c=b.dataset.code;
+  openCode=(openCode===c?null:c);
+  document.querySelectorAll('.row').forEach(x=>x.classList.remove('open'));
+  if(openCode){const p=b.parentElement;p.classList.add('open');}
+ });
+}
 async function load(){
-  await fetchData();
-  DATA.forEach(r=>{ if(!(r.store in prevRank)) prevRank[r.store]=null; });
-  render(true);
-  // هر ۶۰ ثانیه فایل data.json را دوباره از هاست بخوان (بدون شبیه‌سازی تقلبی)
-  setInterval(async ()=>{ await fetchData(); render(false); }, 60000);
-  setInterval(clock, 1000); clock();
+ let saved=null;try{saved=localStorage.getItem('bf-theme');}catch(e){}
+ setTheme(saved||'dark');
+ $('#themeBtn').onclick=()=>{setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');};
+ $('#q').addEventListener('input',e=>{query=e.target.value.trim();openCode=null;renderBoard();});
+ await fetchData();
+ renderTotals();renderPods();renderBoard();
+ setInterval(async()=>{await fetchData();renderTotals();renderPods();renderBoard();},60000);
+ setInterval(clock,1000);clock();
 }
-function clock(){
-  const d = new Date();
-  const el = document.querySelector('#clock');
-  if(el) el.textContent = d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}
-function sorted(){
-  let a = [...DATA];
-  if(query) a = a.filter(r => (r.store+r.city).includes(query));
-  if(sortKey==='net') a.sort((x,y)=>y.net-x.net);
-  if(sortKey==='invoices') a.sort((x,y)=>y.invoices-x.invoices);
-  if(sortKey==='off') a.sort((x,y)=>off(y)-off(x));
-  if(sortKey==='basket') a.sort((x,y)=>basket(y)-basket(x));
-  return a;
-}
-function render(first, flash=false){
-  const rows = sorted();
-  const totI = DATA.reduce((s,r)=>s+r.invoices,0);
-  const totG = DATA.reduce((s,r)=>s+r.gross,0);
-  const totN = DATA.reduce((s,r)=>s+r.net,0);
-  const avgOff = totG ? (1-totN/totG)*100 : 0;
-  document.querySelector('#kCount').textContent = fa(totI);
-  document.querySelector('#kCountSub').textContent = 'فاکتور • میانگین سبد ' + faMoneyShort(totN/Math.max(1,totI));
-  document.querySelector('#kGross').textContent = faMoneyShort(totG);
-  document.querySelector('#kNet').textContent = faMoneyShort(totN);
-  document.querySelector('#kOff').textContent = '٪' + fa(avgOff,1);
-  document.querySelector('#kAvg').textContent = 'از کل فروش';
-  document.querySelector('#updated').textContent = 'آخرین به‌روزرسانی: ' + new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
-  document.querySelector('#countLine').textContent = fa(rows.length) + ' فروشگاه';
-  const top = [...DATA].sort((x,y)=>y.net-x.net).slice(0,3);
-  const order = [top[1], top[0], top[2]];
-  const medals = ['🥈','🥇','🥉'];
-  document.querySelector('#pods').innerHTML = order.map((r,i)=>{
-    const idx = i===1?0:(i===0?1:2);
-    if(!r) return '';
-    return `<div class="pod ${idx===0?'first':(idx===1?'second':'third')}">
-      <div class="crown">${medals[i]}</div>
-      <div class="nm">${r.store}</div><div class="vl">${faMoneyShort(r.net)}</div>
-      <div class="sm">${fa(r.invoices)} فاکتور • ٪${fa(off(r),1)} تخفیف</div>
-      <span class="medal m${i+1}">رتبه ${fa(idx+1)}</span></div>`;
-  }).join('');
-  const el = document.querySelector('#league');
-  el.innerHTML = rows.map((r,i)=>{
-    const rank = i+1;
-    const o = off(r), b = basket(r), p = r.target ? Math.min(100, r.net/r.target*100) : 0;
-    const prev = prevRank[r.store];
-    let mv = '• بدون تغییر', mcls='';
-    if(prev!==null && prev!==rank){ mv = prev>rank ? '▲ صعود' : '▼ سقوط'; mcls = prev>rank?'up':'down'; }
-    const rc = rank===1?'r1':(rank===2?'r2':(rank===3?'r3':''));
-    return `<article class="row ${flash?'flash':''}" tabindex="0" title="${r.store}">
-      <div><div class="rank ${rc}">${fa(rank)}</div><div class="rise ${mcls}">${mv}</div></div>
-      <div><div class="store">${r.store}</div><div class="city">${r.city} • تا هدف ${fa(p,0)}٪</div>
-      <div class="badges">
-        <span class="badge cnt">🧾 ${fa(r.invoices)} فاکتور</span>
-        <span class="badge off">🎁 ٪${fa(o,1)} تخفیف</span>
-        <span class="badge avg">🛒 سبد ${faMoneyShort(b)}</span>
-      </div></div>
-      <div class="net">${faMoneyShort(r.net)}<small>ناخالص ${faMoneyShort(r.gross)}</small></div>
-      <div class="bar"><i style="width:${p}%"></i></div>
-      <div class="goal"><span>خالص: ${fa(r.net)} تومان</span><span>هدف: ${faMoneyShort(r.target)}</span></div>
-    </article>`;
-  }).join('') || '<p class="hint">فروشگاهی پیدا نشد.</p>';
-  rows.forEach((r,i)=> prevRank[r.store]=i+1);
-}
-function summaryText(){
-  const top = [...DATA].sort((x,y)=>y.net-x.net).slice(0,5);
-  const totN = DATA.reduce((s,r)=>s+r.net,0);
-  const totI = DATA.reduce((s,r)=>s+r.invoices,0);
-  let t = `🏆 لیگ بلک‌فرایدی — ساعت ${new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})}\n`;
-  t += `جمع خالص: ${fa(totN)} تومان | فاکتور: ${fa(totI)}\n———————\n`;
-  top.forEach((r,i)=>{ t += `${i+1}. ${r.store}: ${fa(r.net)} (٪${fa(off(r),1)} | ${fa(r.invoices)} فاکتور)\n`; });
-  t += 'جدول زنده: [لینک پنل]';
-  return t;
-}
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); sortKey=b.dataset.sort; render(false);
-}));
-document.querySelector('#q').addEventListener('input',e=>{ query=e.target.value.trim(); render(false); });
-document.querySelector('#waBtn').addEventListener('click',()=>{ window.open('https://wa.me/?text='+encodeURIComponent(summaryText()),'_blank'); });
-document.querySelector('#copyBtn').addEventListener('click',async()=>{
-  try{ await navigator.clipboard.writeText(summaryText()); const b=document.querySelector('#copyBtn'); b.textContent='کپی شد ✓'; setTimeout(()=>b.textContent='کپی خلاصه',1500);}catch(e){}
-});
 load();
