@@ -3,6 +3,7 @@ const $=s=>document.querySelector(s);
 const fa=n=>Number(n).toLocaleString('fa-IR');
 const fmtM=t=> unit==='rial' ? Math.round(Number(t||0)/100000) : Math.round(Number(t||0)/1000000);
 const unitLabel=()=> unit==='rial' ? 'میلیون ریال' : 'میلیون تومان';
+const unitBtnLabel=()=> unit==='rial' ? 'میلیون ریال ⇄' : 'میلیون تومان ⇄';
 const pct=r=> r.gross ? Math.round(r.disc/r.gross*100) : 0;
 const gpct=g=> g.gross ? Math.round((g.gross-g.net)/g.gross*100) : 0;
 const HUES=[45,205,160,285,5,30,130,190,315,95,250];
@@ -20,7 +21,7 @@ function clock(){const d=new Date();const el=$('#clock');if(el)el.textContent=d.
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('bf-theme',t);}catch(e){}
  const b=$('#themeBtn');if(b)b.textContent=(t==='dark'?'🌙 تاریک':'☀️ روشن');}
 function setUnit(u){unit=u;try{localStorage.setItem('bf-unit',u);}catch(e){}
- const b=$('#unitBtn');if(b)b.textContent=unitLabel();renderTotals();renderPods();renderBoard();}
+ const b=$('#unitBtn');if(b)b.textContent=unitBtnLabel();renderTotals();renderBoard();}
 function filtered(){
  let a=[...DATA];
  if(query){a=a.filter(r=>r.store.includes(query)||(r.groups||[]).some(g=>g.name.includes(query)));}
@@ -42,26 +43,7 @@ function renderTotals(){
  ];
  $('#totals').innerHTML=items.map(o=>`<div class="kpi" style="--h:${o.h}"><small>${o.l}</small><b>${o.v}</b><span>${o.u}</span></div>`).join('');
  $('#countLine').textContent=fa(DATA.length)+' فروشگاه';
-}
-function renderPods(){
- const top=[...DATA].sort((a,b)=>b.net-a.net).slice(0,3);
- const slots=[
-  {r:top[0],cls:'gold',em:'🥇',rk:'اول'},
-  {r:top[1],cls:'silver',em:'🥈',rk:'دوم'},
-  {r:top[2],cls:'bronze',em:'🥉',rk:'سوم'}
- ];
- $('#pods').innerHTML=slots.map(s=>{
-  const r=s.r; if(!r) return '<div></div>';
-  return `<div class="pod ${s.cls}"><div class="md">${s.em}</div><div class="nm">${r.store}</div><span class="rk">رتبه ${s.rk}</span>
-  <div class="grid">
-   <div class="pcell"><small>تعداد فروش</small><b>${fa(r.qty)}</b></div>
-   <div class="pcell"><small>تعداد فاکتور</small><b>${fa(r.inv)}</b></div>
-   <div class="pcell"><small>ناخالص</small><b>${fa(fmtM(r.gross))}</b></div>
-   <div class="pcell"><small>خالص</small><b>${fa(fmtM(r.net))}</b></div>
-   <div class="pcell"><small>تخفیف</small><b>${fa(fmtM(r.disc))}</b></div>
-   <div class="pcell"><small>٪ تخفیف</small><b>٪${fa(pct(r))}</b></div>
-  </div><span class="unit">${unitLabel()}</span></div>`;
- }).join('');
+ const ul=$('#unitLine'); if(ul) ul.textContent=u;
 }
 function metric(label,v,hot){return `<div class="m${hot?' hot':''}"><small>${label}</small><b>${v}</b></div>`;}
 function renderBoard(){
@@ -104,13 +86,13 @@ function renderBoard(){
 async function load(){
  let st=null,un=null;try{st=localStorage.getItem('bf-theme');un=localStorage.getItem('bf-unit');}catch(e){}
  setTheme(st||'dark'); unit=(un==='toman'?'toman':'rial');
- const ub=$('#unitBtn'); if(ub) ub.textContent=unitLabel();
+ const ub=$('#unitBtn'); if(ub) ub.textContent=unitBtnLabel();
  $('#themeBtn').onclick=()=>{setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');};
  $('#unitBtn').onclick=()=>{setUnit(unit==='rial'?'toman':'rial');};
  $('#q').addEventListener('input',e=>{query=e.target.value.trim();openCode=null;renderBoard();});
  await fetchData();
- renderTotals();renderPods();renderBoard();
- setInterval(async()=>{await fetchData();renderTotals();renderPods();renderBoard();},60000);
+ renderTotals();renderBoard();
+ setInterval(async()=>{await fetchData();renderTotals();renderBoard();},60000);
  setInterval(clock,1000);clock();
 }
 load();
