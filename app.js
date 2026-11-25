@@ -28,7 +28,7 @@ function sortGroups(list){
 }
 function sortModels(list){
  const a=[...(list||[])]; const d=gsortDir;
- if(gsortKey==='name'){ a.sort((x,y)=> String(x.name).localeCompare(String(y.name),'fa', {numeric:true})*d); }
+ if(gsortKey==='name'){ a.sort((x,y)=> String(x.name).localeCompare(String(y.name),'fa',{numeric:true})*d); }
  else{ a.sort((x,y)=> (gval(x,gsortKey)-gval(y,gsortKey))*d); }
  return a;
 }
@@ -63,6 +63,55 @@ function renderTotals(){
  const ul=$('#unitLine'); if(ul) ul.textContent=u;
 }
 function metric(label,v,hot){return `<div class="m${hot?' hot':''}"><small>${label}</small><b>${v}</b></div>`;}
+function findModel(scode,gname,mname){
+ const st=DATA.find(r=>r.code===scode); if(!st) return null;
+ const g=(st.groups||[]).find(x=>x.name===gname); if(!g) return null;
+ const m=(g.models||[]).find(x=>String(x.name)===String(mname)); return m||null;
+}
+function openPhoto(scode,gname,mname){
+ const st=DATA.find(r=>r.code===scode);
+ const m=findModel(scode,gname,mname); if(!m) return;
+ const storeName=st?st.store:'';
+ $('#ptitle').textContent='مدل '+m.name;
+ $('#psub').textContent=storeName+' • '+gname+' • کد مدل '+m.name;
+ const vars=(m.variants&&m.variants.length)?m.variants:(m.img?[{src:m.thumb||m.img,large:m.img,href:m.href,title:''}]:[]);
+ const u=unitLabel();
+ $('#pstats').innerHTML=
+  `<div class="pstat"><small>تعداد فروش</small><b>${fa(m.qty)}</b></div>`+
+  `<div class="pstat"><small>تعداد فاکتور</small><b>${fa(m.inv)}</b></div>`+
+  `<div class="pstat"><small>٪ تخفیف</small><b>٪${fa(gpct(m))}</b></div>`+
+  `<div class="pstat"><small>ناخالص (${u})</small><b>${fa(fmtM(m.gross))}</b></div>`+
+  `<div class="pstat"><small>خالص (${u})</small><b>${fa(fmtM(m.net))}</b></div>`+
+  `<div class="pstat"><small>تخفیف (${u})</small><b>${fa(fmtM(m.disc))}</b></div>`;
+ const wrap=$('#pimgwrap'), thumbs=$('#pthumbs');
+ if(vars.length&&(vars[0].large||vars[0].src)){
+  const first=vars[0].large||vars[0].src;
+  wrap.innerHTML=`<img id="pmain" src="${first}" alt="مدل ${m.name}" loading="eager">`;
+  const pm=wrap.querySelector('#pmain');
+  pm.onerror=()=>{wrap.innerHTML=`<div class="pnoimg"><b>${m.name}</b>خطا در بارگذاری عکس<br>با دکمه زیر در سایت سرژه ببینید</div>`;};
+  if(vars.length>1){
+   thumbs.innerHTML=vars.map((v,i)=>`<img src="${v.src}" data-i="${i}" class="${i===0?'on':''}" alt="${(v.title||'').slice(0,40)}" loading="lazy">`).join('');
+   thumbs.querySelectorAll('img').forEach(im=>im.onclick=()=>{
+    thumbs.querySelectorAll('img').forEach(x=>x.classList.remove('on'));
+    im.classList.add('on');
+    const v=vars[Number(im.dataset.i)];
+    const big=v.large||v.src;
+    pm.src=big;
+   });
+  } else { thumbs.innerHTML=''; }
+ } else {
+  wrap.innerHTML=`<div class="pnoimg"><b>${m.name}</b>برای این مدل عکسی در سایت پیدا نشد<br>با دکمه زیر در سایت سرژه جست‌وجو کنید</div>`;
+  thumbs.innerHTML='';
+ }
+ const kw='https://www.sergestyle.com/product?keyword='+encodeURIComponent(m.name);
+ $('#plink').href=kw;
+ $('#pmodal').classList.add('open');
+ document.body.style.overflow='hidden';
+}
+function closePhoto(){
+ const p=$('#pmodal'); if(p) p.classList.remove('open');
+ document.body.style.overflow='';
+}
 function renderBoard(){
  const rows=[...DATA].sort((x,y)=>(val(x,sortKey)-val(y,sortKey))*sortDir);
  const u=unitLabel();
@@ -87,13 +136,22 @@ function renderBoard(){
    const gk=r.code+'|'+g.name;
    const isOpen=openG.has(gk);
    const mlist=sortModels(g.models||[]);
-   const mrows=mlist.map(m=>`<div class="mrow"><div><b>${m.name}</b></div><div>${fa(m.qty)}</div><div>${fa(m.inv)}</div><div>${fa(fmtM(m.gross))}</div><div>${fa(fmtM(m.net))}</div><div>${fa(fmtM(m.disc))}</div><div>٪${fa(gpct(m))}</div></div>`).join('');
-   const mhead=`<div class="mrow mhead"><div>مدل</div><div>فروش</div><div>فاکتور</div><div>ناخالص</div><div>خالص</div><div>تخفیف</div><div>٪</div></div>`;
+   let mbody='';
+   if(!mlist.length){
+    mbody=`<div style="padding:10px;text-align:center;color:var(--muted);font-size:11px">برای این کارگروه مدلی ثبت نشده — data.json جدید (مدل‌دار) را جایگزین کنید</div>`;
+   } else {
+    const mhead=`<div class="mrow mhead"><div>مدل</div><div>فروش</div><div>فاکتور</div><div>ناخالص</div><div>خالص</div><div>تخفیف</div><div>٪</div><div>عکس</div></div>`;
+    const mrows=mlist.map(m=>{
+     const hasImg=m.img?'':'';
+     return `<div class="mrow"><div><b>${m.name}</b></div><div>${fa(m.qty)}</div><div>${fa(m.inv)}</div><div>${fa(fmtM(m.gross))}</div><div>${fa(fmtM(m.net))}</div><div>${fa(fmtM(m.disc))}</div><div>٪${fa(gpct(m))}</div><div><button class="pbtn" data-s="${r.code}" data-g="${g.name}" data-m="${m.name}">📷 عکس</button></div></div>`;
+    }).join('');
+    mbody=mhead+mrows;
+   }
    return `<div class="gitem${isOpen?' open':''}">
     <button class="grow" data-gk2="${gk.replace(/"/g,'')}">
      <div><b>${g.name} <span class="mini">▾</span></b></div><div>${fa(g.qty)}</div><div>${fa(g.inv)}</div><div>${fa(fmtM(g.gross))}</div><div>${fa(fmtM(g.net))}</div><div>${fa(fmtM(g.disc))}</div><div>٪${fa(gpct(g))}</div>
     </button>
-    <div class="mwrap"><div class="mtable">${mhead}${mrows}</div></div>
+    <div class="mwrap"><div class="mtable">${mbody}</div></div>
    </div>`;
   }).join('');
   return `<div class="row${openCode===r.code?' open':''}" style="--h:${h}">
@@ -104,7 +162,7 @@ function renderBoard(){
     <span class="chev">▾</span>
    </button>
    <div class="drawer"><h3>📦 کارگروه ${r.store} <span class="tag">${u}</span></h3>
-    <p class="hint">روی هر کارگروه بزن تا مدل‌های آن باز شود • مدل‌ها با همان سورت کارگروه مرتب می‌شوند</p>
+    <p class="hint">روی هر کارگروه بزن تا مدل‌های آن باز شود • مدل‌ها با همان سورت کارگروه مرتب می‌شوند • روی 📷 عکس بزن تا عکس مدل از سایت سرژه باز شود</p>
     <div class="gwrap"><div class="gtable">${ghead}${gitems}</div></div>
    </div></div>`;
  }).join('');
@@ -127,15 +185,22 @@ function renderBoard(){
   if(openG.has(k)){openG.delete(k);item.classList.remove('open');}
   else{openG.add(k);item.classList.add('open');}
  });
+ document.querySelectorAll('.pbtn').forEach(b=>b.onclick=(e)=>{
+  e.stopPropagation();
+  openPhoto(b.dataset.s,b.dataset.g,b.dataset.m);
+ });
 }
 async function load(){
  let st=null,un=null;try{st=localStorage.getItem('bf-theme');un=localStorage.getItem('bf-unit');}catch(e){}
  setTheme(st||'dark');
- // پیش‌فرض میلیون تومان؛ فقط اگر قبلا ریال ذخیره شده بود همان می‌ماند
  unit=(un==='rial'?'rial':'toman');
  const ub=$('#unitBtn'); if(ub) ub.textContent=unitBtnLabel();
  $('#themeBtn').onclick=()=>{setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');};
  $('#unitBtn').onclick=()=>{setUnit(unit==='rial'?'toman':'rial');};
+ const pc=$('#pclose'); if(pc) pc.onclick=closePhoto;
+ const pc2=$('#pclose2'); if(pc2) pc2.onclick=closePhoto;
+ const pm=$('#pmodal'); if(pm) pm.addEventListener('click',e=>{if(e.target===pm) closePhoto();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape') closePhoto();});
  await fetchData();
  renderTotals();renderBoard();
  setInterval(async()=>{await fetchData();renderTotals();renderBoard();},60000);
