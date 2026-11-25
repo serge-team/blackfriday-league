@@ -237,7 +237,6 @@ load();
 /* ================= تب‌ها + تاریخ شمسی + سابقه و مقایسه ================= */
 let HROWS=[], HDATES=[], HDATA=[], HDAILY=[], DETAIL_FROM='', DETAIL_DAYS=45;
 let H_FROM='', H_TO='', hsortKey='net', hsortDir=-1, hOpenCode=null, hOpenG=new Set();
-let C_AFROM='', C_ATO='', C_BFROM='', C_BTO='', CMP={a:[],b:[],rows:[],tot:{}}, cmpSortKey='netB', cmpSortDir=-1;
 let CAL_FOR=null, CAL_Y=1405, CAL_M=9;
 const FA_D='۰۱۲۳۴۵۶۷۸۹';
 const en2fa=s=>String(s).replace(/[0-9]/g,d=>FA_D[d]);
@@ -470,78 +469,251 @@ function applyHistory(silent){
     n.innerHTML=`گزارش بازه <b>${fmtD(f)}</b> تا <b>${fmtD(t2)}</b> — <b>${fa(HDATA.length)}</b> فروشگاه، <b>${fa(q)}</b> قلم فروش${extra}`;markHChip();}
 }
 
-/* ---------- مقایسه دو بازه ---------- */
-function aggSimple(a,b){
-  a=normD(fa2en(a));b=normD(fa2en(b));
-  if(!a||!b)return new Map();
-  if(cmpD(a,b)>0){const t=a;a=b;b=t;}
+/* ---------- مقایسه دو بازه: جدول تک‌ردیفه ---------- */
+let C_AFROM='', C_ATO='', C_BFROM='', C_BTO='', CMP={a:new Map(),b:new Map(),rows:[],tot:null};
+let C_SEL_A=new Set(), C_SEL_B=new Set(), C_OPTS={gross:false,net:false,disc:false}, C_BUILT=false, C_UI=false;
+function ckey(code,store){return String(code==null?'':code)+'|'+String(store==null?'':store);}
+function getAllStores(){
   const m=new Map();
-  const src=(HDAILY&&HDAILY.length)?HDAILY:HROWS; // جمع روزانه دقیق برای کل تاریخ
+  const push=(c,s)=>{
+    s=String(s==null?'':s).trim(); if(!s||s==='None')return;
+    const k=ckey(c,s); if(!m.has(k))m.set(k,{code:String(c==null?'':c),store:s});
+  };
+  try{
+    if(HDAILY&&HDAILY.length)HDAILY.forEach(r=>push(r.code,r.store));
+    if(!m.size&&HROWS&&HROWS.length)HROWS.forEach(r=>push(r.code,r.store));
+    if(!m.size&&typeof DATA!=='undefined'&&DATA&&DATA.length)DATA.forEach(r=>push(r.code,r.store));
+  }catch(e){}
+  return [...m.values()].sort((x,y)=>String(x.store).localeCompare(String(y.store),'fa'));
+}
+function leagueRank(){
+  const o=new Map();
+  try{(DATA||[]).forEach((r,i)=>{const k=ckey(r.code,r.store); if(!o.has(k))o.set(k,i);});}catch(e){}
+  return o;
+}
+function loadSel(key,all){
+  try{
+    const raw=localStorage.getItem(key);
+    if(raw==null)return new Set(all);
+    const arr=JSON.parse(raw);
+    if(!Array.isArray(arr))return new Set(all);
+    const ok=arr.filter(x=>all.includes(x));
+    return new Set(ok.length?ok:all);
+  }catch(e){return new Set(all);}
+}
+function saveSel(){
+  try{
+    localStorage.setItem('bf-cSelA',JSON.stringify([...C_SEL_A]));
+    localStorage.setItem('bf-cSelB',JSON.stringify([...C_SEL_B]));
+    localStorage.setItem('bf-cOpts',JSON.stringify(C_OPTS));
+  }catch(e){}
+}
+function updateSelCounts(){
+  const n=getAllStores().length||0;
+  const a=$('#cASelCount'),b=$('#cBSelCount');
+  if(a)a.textContent=fa(C_SEL_A.size)+'/'+fa(n);
+  if(b)b.textContent=fa(C_SEL_B.size)+'/'+fa(n);
+  const aa=$('#cASelAll'),bb=$('#cBSelAll');
+  if(aa){aa.checked=C_SEL_A.size>0&&C_SEL_A.size===n; aa.indeterminate=C_SEL_A.size>0&&C_SEL_A.size<n;}
+  if(bb){bb.checked=C_SEL_B.size>0&&C_SEL_B.size===n; bb.indeterminate=C_SEL_B.size>0&&C_SEL_B.size<n;}
+}
+function wasKeyKnown(k,which){
+  try{
+    const raw=localStorage.getItem(which==='A'?'bf-cKeysA':'bf-cKeysB');
+    if(!raw)return false;
+    return JSON.parse(raw).includes(k);
+  }catch(e){return true;}
+}
+function buildCompareStores(){
+  const all=getAllStores();
+  const keys=all.map(s=>ckey(s.code,s.store));
+  if(!C_BUILT){
+    C_SEL_A=loadSel('bf-cSelA',keys);
+    C_SEL_B=loadSel('bf-cSelB',keys);
+    try{
+      const o=JSON.parse(localStorage.getItem('bf-cOpts')||'{}');
+      C_OPTS={gross:!!o.gross,net:!!o.net,disc:!!o.disc};
+    }catch(e){}
+    C_BUILT=true;
+  }else{
+    keys.forEach(k=>{ if(!C_SEL_A.has(k)&&!wasKeyKnown(k,'A'))C_SEL_A.add(k); });
+    keys.forEach(k=>{ if(!C_SEL_B.has(k)&&!wasKeyKnown(k,'B'))C_SEL_B.add(k); });
+  }
+  try{localStorage.setItem('bf-cKeysA',JSON.stringify(keys));localStorage.setItem('bf-cKeysB',JSON.stringify(keys));}catch(e){}
+  const la=$('#cASelList'),lb=$('#cBSelList');
+  if(la)la.innerHTML=all.map(s=>{
+    const k=ckey(s.code,s.store);
+    const on=C_SEL_A.has(k);
+    return `<label class="sopt"><input type="checkbox" data-k="${k.replace(/"/g,'')}"${on?' checked':''}><span>${s.store}</span></label>`;
+  }).join('')||'<div style="padding:6px;color:var(--muted);font-size:11px">فروشگاهی نیست</div>';
+  if(lb)lb.innerHTML=all.map(s=>{
+    const k=ckey(s.code,s.store);
+    const on=C_SEL_B.has(k);
+    return `<label class="sopt"><input type="checkbox" data-k="${k.replace(/"/g,'')}"${on?' checked':''}><span>${s.store}</span></label>`;
+  }).join('')||'<div style="padding:6px;color:var(--muted);font-size:11px">فروشگاهی نیست</div>';
+  if(la)la.querySelectorAll('input').forEach(inp=>inp.onchange=()=>{
+    const k=inp.dataset.k;
+    if(inp.checked)C_SEL_A.add(k); else C_SEL_A.delete(k);
+    saveSel();updateSelCounts();autoRecompare();
+  });
+  if(lb)lb.querySelectorAll('input').forEach(inp=>inp.onchange=()=>{
+    const k=inp.dataset.k;
+    if(inp.checked)C_SEL_B.add(k); else C_SEL_B.delete(k);
+    saveSel();updateSelCounts();autoRecompare();
+  });
+  updateSelCounts();
+}
+function autoRecompare(){
+  if(!CMP||!CMP.tot)return;
+  if(!($('#cAFrom')&&$('#cAFrom').value&&$('#cATo')&&$('#cATo').value&&$('#cBFrom')&&$('#cBFrom').value&&$('#cBTo')&&$('#cBTo').value))return;
+  try{applyCompare();}catch(e){}
+}
+function wireCompareUI(){
+  if(C_UI)return; C_UI=true;
+  const g1=$('#cOptGross'),g2=$('#cOptNet'),g3=$('#cOptDisc');
+  if(g1)g1.checked=!!C_OPTS.gross;
+  if(g2)g2.checked=!!C_OPTS.net;
+  if(g3)g3.checked=!!C_OPTS.disc;
+  const h=()=>{C_OPTS={gross:!!(g1&&g1.checked),net:!!(g2&&g2.checked),disc:!!(g3&&g3.checked)};saveSel();syncUnitLines();if(CMP&&CMP.tot){try{renderCompare();}catch(e){}}};
+  if(g1)g1.onchange=h; if(g2)g2.onchange=h; if(g3)g3.onchange=h;
+  const bA=$('#cASelBtn'),pA=$('#cASelPanel'),bB=$('#cBSelBtn'),pB=$('#cBSelPanel');
+  if(bA&&pA)bA.onclick=e=>{e.stopPropagation();pA.classList.toggle('open');if(pB)pB.classList.remove('open');};
+  if(bB&&pB)bB.onclick=e=>{e.stopPropagation();pB.classList.toggle('open');if(pA)pA.classList.remove('open');};
+  document.addEventListener('click',e=>{
+    if(e.target&&e.target.closest&&e.target.closest('.selWrap'))return;
+    if(pA)pA.classList.remove('open'); if(pB)pB.classList.remove('open');
+  });
+  const aA=$('#cASelAll'),aB=$('#cBSelAll');
+  if(aA)aA.onchange=()=>{
+    const all=getAllStores().map(s=>ckey(s.code,s.store));
+    C_SEL_A=new Set(aA.checked?all:[]);
+    saveSel();buildCompareStores();autoRecompare();
+  };
+  if(aB)aB.onchange=()=>{
+    const all=getAllStores().map(s=>ckey(s.code,s.store));
+    C_SEL_B=new Set(aB.checked?all:[]);
+    saveSel();buildCompareStores();autoRecompare();
+  };
+}
+function aggSimpleFiltered(a,b,sel){
+  a=normD(fa2en(a));b=normD(fa2en(b));
+  const m=new Map();
+  if(!a||!b)return m;
+  if(cmpD(a,b)>0){const t=a;a=b;b=t;}
+  const src=(HDAILY&&HDAILY.length)?HDAILY:HROWS;
   for(const r of src){
     if(!inRange(r.d,a,b))continue;
-    const k=r.code+'|'+r.store;
+    const k=ckey(r.code,r.store);
+    if(sel&&sel.size&&!sel.has(k))continue;
     let s=m.get(k);
     if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0};m.set(k,s);}
     s.qty+=r.qty;s.inv+=(r.inv||0);s.gross+=r.gross;s.net+=r.net;
   }
   return m;
 }
-function pctOf(s){return s.gross?Math.round((s.gross-s.net)/s.gross*100):0;}
-function signFa(n){n=Math.round(n);if(n===0)return fa(0);if(n>0)return '+'+fa(n);return fa(n);}
+function pctOf(s){const g=+s.gross||0;return g?Math.round(((g-(+s.net||0))/g)*100):0;}
+function signFa(n){n=Math.round(+n||0);if(n===0)return fa(0);if(n>0)return '+'+fa(n);return fa(n);}
+function cmpMoneyOn(){return !!(C_OPTS.gross||C_OPTS.net||C_OPTS.disc);}
+function syncCmpUnit(){const c=$('#cunitLine');if(c)c.textContent=cmpMoneyOn()?unitLabel():'';}
 function applyCompare(){
   const af=normD(fa2en($('#cAFrom').value)),at=normD(fa2en($('#cATo').value));
   const bf=normD(fa2en($('#cBFrom').value)),bt=normD(fa2en($('#cBTo').value));
-  if(!af||!at||!bf||!bt){$('#crangeNote').innerHTML='⚠️ هر چهار تاریخ را انتخاب کنید.';return;}
+  const note=$('#crangeNote');
+  if(!af||!at||!bf||!bt){if(note)note.innerHTML='⚠️ هر چهار تاریخ را انتخاب کنید.';return;}
+  if(!C_SEL_A.size||!C_SEL_B.size){if(note)note.innerHTML='⚠️ حداقل یک فروشگاه در هر بازه تیک بزنید.';return;}
   C_AFROM=af;C_ATO=at;C_BFROM=bf;C_BTO=bt;
   try{localStorage.setItem('bf-cAFrom',en2fa(af));localStorage.setItem('bf-cATo',en2fa(at));localStorage.setItem('bf-cBFrom',en2fa(bf));localStorage.setItem('bf-cBTo',en2fa(bt));}catch(e){}
-  const A=aggSimple(af,at),B=aggSimple(bf,bt);
+  const A=aggSimpleFiltered(af,at,C_SEL_A),B=aggSimpleFiltered(bf,bt,C_SEL_B);
   const keys=new Set([...A.keys(),...B.keys()]);
+  const rank=leagueRank();
   const rows=[...keys].map(k=>{
     const a=A.get(k)||{code:'',store:'',qty:0,gross:0,net:0};
     const b=B.get(k)||{code:a.code,store:a.store,qty:0,gross:0,net:0};
     const store=a.store||b.store,code=a.code||b.code;
     const pa=pctOf(a),pb=pctOf(b);
-    return {code,store,aq:a.qty,an:a.net,ap:pa,bq:b.qty,bn:b.net,bp:pb,dq:b.qty-a.qty,dn:b.net-a.net,dp:pb-pa,netB:b.net};
+    const ag=+a.gross||0,bg=+b.gross||0,an=+a.net||0,bn=+b.net||0;
+    const ad=ag-an,bd=bg-bn;
+    return {code,store,
+      aq:+a.qty||0,bq:+b.qty||0,dq:(+b.qty||0)-(+a.qty||0),
+      ap:pa,bp:pb,dp:pb-pa,
+      ag,bg,dg:bg-ag,an,bn,dn:bn-an,ad,bd,dd:bd-ad};
+  }).sort((x,y)=>{
+    const rx=rank.has(ckey(x.code,x.store))?rank.get(ckey(x.code,x.store)):1e9;
+    const ry=rank.has(ckey(y.code,y.store))?rank.get(ckey(y.code,y.store)):1e9;
+    if(rx!==ry)return rx-ry;
+    return String(x.store).localeCompare(String(y.store),'fa');
   });
-  CMP={a:A,b:B,rows};
-  let tq=0,tn=0,tg=0;
-  // totals
-  let Aq={qty:0,net:0,gross:0},Bq={qty:0,net:0,gross:0};
-  rows.forEach(r=>{});
-  A.forEach(s=>{Aq.qty+=s.qty;Aq.net+=s.net;Aq.gross+=s.gross;});
-  B.forEach(s=>{Bq.qty+=s.qty;Bq.net+=s.net;Bq.gross+=s.gross;});
-  CMP.tot={aq:Aq.qty,an:Aq.net,ap:pctOf(Aq),bq:Bq.qty,bn:Bq.net,bp:pctOf(Bq),dq:Bq.qty-Aq.qty,dn:Bq.net-Aq.net,dp:pctOf(Bq)-pctOf(Aq)};
+  const T={aq:0,bq:0,ag:0,bg:0,an:0,bn:0,ad:0,bd:0};
+  rows.forEach(r=>{T.aq+=r.aq;T.bq+=r.bq;T.ag+=r.ag;T.bg+=r.bg;T.an+=r.an;T.bn+=r.bn;T.ad+=r.ad;T.bd+=r.bd;});
+  const tap=T.ag?Math.round(T.ad/T.ag*100):0, tbp=T.bg?Math.round(T.bd/T.bg*100):0;
+  CMP={a:A,b:B,rows,tot:Object.assign({},T,{dq:T.bq-T.aq,dg:T.bg-T.ag,dn:T.bn-T.an,dd:T.bd-T.ad,ap:tap,bp:tbp,dp:tbp-tap,n:rows.length})};
+  if(note)note.innerHTML='';
   renderCompare();
-  $('#crangeNote').innerHTML=`بازه اول <b>${fmtD(af)}</b> تا <b>${fmtD(at)}</b> &nbsp;|&nbsp; بازه دوم <b>${fmtD(bf)}</b> تا <b>${fmtD(bt)}</b> — <b>${fa(rows.length)}</b> فروشگاه`;
+}
+function cmpCols(){
+  const cols=[
+    {k:'aq',t:'فروش A',c:'ca'},
+    {k:'bq',t:'فروش B',c:'cb'},
+    {k:'dq',t:'Δ فروش',c:'cd',diff:1},
+    {k:'ap',t:'٪ A',c:'ca',pct:1},
+    {k:'bp',t:'٪ B',c:'cb',pct:1},
+    {k:'dp',t:'Δ ٪',c:'cd',pctdiff:1}
+  ];
+  if(C_OPTS.gross)cols.push({k:'ag',t:'ناخالص A',c:'ca',money:1},{k:'bg',t:'ناخالص B',c:'cb',money:1},{k:'dg',t:'Δ ناخالص',c:'cd',money:1,diff:1});
+  if(C_OPTS.net)cols.push({k:'an',t:'خالص A',c:'ca',money:1},{k:'bn',t:'خالص B',c:'cb',money:1},{k:'dn',t:'Δ خالص',c:'cd',money:1,diff:1});
+  if(C_OPTS.disc)cols.push({k:'ad',t:'تخفیف A',c:'ca',money:1},{k:'bd',t:'تخفیف B',c:'cb',money:1},{k:'dd',t:'Δ تخفیف',c:'cd',money:1,diff:1});
+  return cols;
+}
+function cmpCell(r,c){
+  const v=+r[c.k]||0;
+  if(c.pct)return `<td>٪${fa(v)}</td>`;
+  if(c.pctdiff)return `<td><b class="${v>0?'up':(v<0?'dn':'')}">${(v>0?'+':'')+'٪'+fa(v)}</b></td>`;
+  if(c.money){
+    const n=fmtM(v);
+    if(c.diff)return `<td><b class="${v>0?'up':(v<0?'dn':'')}">${signFa(n)}</b></td>`;
+    return `<td>${fa(n)}</td>`;
+  }
+  if(c.diff)return `<td><b class="${v>0?'up':(v<0?'dn':'')}">${signFa(v)}</b></td>`;
+  return `<td>${fa(v)}</td>`;
 }
 function renderCompare(){
-  const el=$('#cmpWrap');if(!el||!CMP.rows)return;
+  const tw=$('#cmpTotal'),el=$('#cmpWrap');
+  if(!tw||!el)return;
+  if(!CMP.rows||!CMP.rows.length){tw.innerHTML='';el.innerHTML='<p style="color:var(--muted);text-align:center">فروشگاهی برای مقایسه نیست.</p>';syncCmpUnit();return;}
   const u=unitLabel();
-  const rows=[...CMP.rows].sort((x,y)=>{
-    let vx=x[cmpSortKey],vy=y[cmpSortKey];
-    if(cmpSortKey==='store'){return String(x.store).localeCompare(String(y.store),'fa')*cmpSortDir;}
-    return (vx-vy)*cmpSortDir;
-  });
-  const sorts=[{k:'netB',t:'خالص بازه دوم'},{k:'dn',t:'اختلاف خالص'},{k:'bq',t:'فروش بازه دوم'},{k:'store',t:'نام فروشگاه'}];
+  const cols=cmpCols();
   const t=CMP.tot;
-  const totHtml=t?`<div class="row totalrow" style="--h:45"><button class="rowhead" style="cursor:default"><span class="rank r1">★</span><span class="storebox"><span class="store">جمع کل (${fa(rows.length)} فروشگاه)</span></span><span class="mgrid">${metric('فروش A',fa(t.aq))+metric('خالص A',fa(fmtM(t.an)),true)+metric('٪ A','٪'+fa(t.ap))+metric('فروش B',fa(t.bq))+metric('خالص B',fa(fmtM(t.bn)),true)+metric('٪ B','٪'+fa(t.bp))}</span><span class="chevwrap"><span class="chevlabel">${u}</span></span></button></div>`:'';
-  el.innerHTML=`<div class="toolbar"><div class="sortlabel">سورت بر اساس:</div><div class="sortbar">${sorts.map(s=>`<button class="sbtn${cmpSortKey===s.k?' on':''}" data-ck="${s.k}">${s.t}${cmpSortKey===s.k?(cmpSortDir===-1?' ▼':' ▲'):''}</button>`).join('')}</div></div>${totHtml}<div id="cmplist" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>`;
-  el.querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>{const k=b.dataset.ck;if(cmpSortKey===k)cmpSortDir*=-1;else{cmpSortKey=k;cmpSortDir=(k==='store'?1:-1);}renderCompare();});
-  const list=el.querySelector('#cmplist');
-  const ranges=`<div style="font-size:10.5px;color:var(--muted);text-align:center">A: ${fmtD(C_AFROM)} تا ${fmtD(C_ATO)} &nbsp;•&nbsp; B: ${fmtD(C_BFROM)} تا ${fmtD(C_BTO)} &nbsp;•&nbsp; اختلاف = B − A (${u})</div>`;
-  list.innerHTML=ranges+rows.map((r,i)=>{
-    const h=hue(i);
-    const dqCls=r.dq>0?'up':(r.dq<0?'dn':''),dnCls=r.dn>0?'up':(r.dn<0?'dn':''),dpCls=r.dp>0?'up':(r.dp<0?'dn':'');
-    return `<div class="row" style="--h:${h}"><div style="padding:9px 10px 10px">`
-    +`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="rank ${i<3?'r'+(i+1):''}" style="width:24px;height:24px;font-size:12px">${fa(i+1)}</span><b style="font-size:14px">${r.store}</b><span style="margin-inline-start:auto" class="tag">${u}</span></div>`
-    +`<div class="cmpgrid">`
-    +`<div class="cmpSec a"><h5>بازه اول A</h5><small>${fmtD(C_AFROM)} تا ${fmtD(C_ATO)}</small><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">${metric('تعداد فروش',fa(r.aq))+metric('خالص',fa(fmtM(r.an)),true)+metric('٪ تخفیف','٪'+fa(r.ap))}</div></div>`
-    +`<div class="cmpSec b"><h5>بازه دوم B</h5><small>${fmtD(C_BFROM)} تا ${fmtD(C_BTO)}</small><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">${metric('تعداد فروش',fa(r.bq))+metric('خالص',fa(fmtM(r.bn)),true)+metric('٪ تخفیف','٪'+fa(r.bp))}</div></div>`
-    +`<div class="cmpSec d"><h5>اختلاف (B−A)</h5><small>مثبت یعنی رشد بازه دوم</small><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px"><div class="m"><small>تعداد فروش</small><b class="${dqCls}">${signFa(r.dq)}</b></div><div class="m"><small>خالص (${u})</small><b class="${dnCls}">${signFa(fmtM(r.dn))}</b></div><div class="m"><small>٪ تخفیف</small><b class="${dpCls}">${(r.dp>0?'+':'')+'٪'+fa(r.dp)}</b></div></div></div>`
-    +`</div></div></div>`;
-  }).join('');
-  const cl=$('#cunitLine');if(cl)cl.textContent=u;
+  const boxes=[];
+  boxes.push(metric('فروش A',fa(t.aq)));
+  boxes.push(metric('فروش B',fa(t.bq)));
+  boxes.push(`<div class="m"><small>اختلاف فروش</small><b class="${t.dq>0?'up':(t.dq<0?'dn':'')}">${signFa(t.dq)}</b></div>`);
+  boxes.push(metric('٪ A','٪'+fa(t.ap)));
+  boxes.push(metric('٪ B','٪'+fa(t.bp)));
+  boxes.push(`<div class="m"><small>اختلاف ٪</small><b class="${t.dp>0?'up':(t.dp<0?'dn':'')}">${(t.dp>0?'+':'')+'٪'+fa(t.dp)}</b></div>`);
+  if(C_OPTS.gross){
+    boxes.push(metric('ناخالص A',fa(fmtM(t.ag))));
+    boxes.push(metric('ناخالص B',fa(fmtM(t.bg))));
+    boxes.push(`<div class="m"><small>اختلاف ناخالص</small><b class="${t.dg>0?'up':(t.dg<0?'dn':'')}">${signFa(fmtM(t.dg))}</b></div>`);
+  }
+  if(C_OPTS.net){
+    boxes.push(metric('خالص A',fa(fmtM(t.an)),true));
+    boxes.push(metric('خالص B',fa(fmtM(t.bn)),true));
+    boxes.push(`<div class="m"><small>اختلاف خالص</small><b class="${t.dn>0?'up':(t.dn<0?'dn':'')}">${signFa(fmtM(t.dn))}</b></div>`);
+  }
+  if(C_OPTS.disc){
+    boxes.push(metric('تخفیف A',fa(fmtM(t.ad))));
+    boxes.push(metric('تخفیف B',fa(fmtM(t.bd))));
+    boxes.push(`<div class="m"><small>اختلاف تخفیف</small><b class="${t.dd>0?'up':(t.dd<0?'dn':'')}">${signFa(fmtM(t.dd))}</b></div>`);
+  }
+  tw.innerHTML=`<div class="cmptotal"><h4>★ جمع کل — ${fa(t.n)} فروشگاه <span class="tag">${cmpMoneyOn()?u:'تعداد و ٪'}</span></h4><div class="tgrid">${boxes.join('')}</div></div>`;
+  const cls=cols.length>12?'xmany':(cols.length>6?'many':'');
+  const head=`<thead><tr><th style="text-align:right">فروشگاه</th>${cols.map(c=>`<th class="${c.c}">${c.t}</th>`).join('')}</tr></thead>`;
+  const body=CMP.rows.map(r=>`<tr><td class="store">${r.store}</td>${cols.map(c=>cmpCell(r,c)).join('')}</tr>`).join('');
+  const tds=cols.map(c=>cmpCell(t,c)).join('');
+  el.innerHTML=`<div class="cmpScroll"><table class="cmptable ${cls}">${head}<tbody>${body}<tr class="total"><td class="store">جمع کل</td>${tds}</tr></tbody></table>${cls?`<div class="hint">◀ برای دیدن همه ستون‌ها جدول را به چپ بکشید ▶${cmpMoneyOn()?` — مبالغ به ${u}`:''}</div>`:''}</div>`;
+  syncCmpUnit();
 }
+
 /* ---------- چیپ‌ها ---------- */
 function markHChip(){
   const box=$('#hChips');if(!box)return;
@@ -568,7 +740,7 @@ function buildChips(){
   markHChip();
 }
 /* ---------- بوت ---------- */
-function syncUnitLines(){const u=unitLabel();const a=$('#unitLine');if(a)a.textContent=u;const b=$('#hunitLine');if(b)b.textContent=u;const c=$('#cunitLine');if(c)c.textContent=u;}
+function syncUnitLines(){const u=unitLabel();const a=$('#unitLine');if(a)a.textContent=u;const b=$('#hunitLine');if(b)b.textContent=u;try{if(typeof syncCmpUnit==='function')syncCmpUnit();else{const c=$('#cunitLine');if(c)c.textContent=u;}}catch(e){}}
 async function fetchHistory(){
   if(HROWS&&HROWS.length&&HDATES&&HDATES.length) return; // از تک‌فایل خوانده شده
   try{
@@ -607,6 +779,7 @@ function bootTabs(){
       if(n)n.innerHTML=HDATES.length?`بازه موجود: <b>${fmtD(mn)}</b> تا <b>${fmtD(mx)}</b> — «نمایش گزارش بازه» را بزنید.`:'فایل data.json پیدا نشد.';
     }
     // compare defaults
+    try{buildCompareStores();wireCompareUI();}catch(e){}
     let af='',at2='',bf2='',bt='';
     try{af=localStorage.getItem('bf-cAFrom')||'';at2=localStorage.getItem('bf-cATo')||'';bf2=localStorage.getItem('bf-cBFrom')||'';bt=localStorage.getItem('bf-cBTo')||'';}catch(e){}
     C_AFROM=af?normD(fa2en(af)):mx;C_ATO=at2?normD(fa2en(at2)):mx;
@@ -615,9 +788,9 @@ function bootTabs(){
     if($('#cATo'))$('#cATo').value=C_ATO?en2fa(C_ATO):'';
     if($('#cBFrom'))$('#cBFrom').value=C_BFROM?en2fa(C_BFROM):'';
     if($('#cBTo'))$('#cBTo').value=C_BTO?en2fa(C_BTO):'';
+    try{updateSelCounts();}catch(e){}
     if(HROWS.length&&C_AFROM&&C_ATO&&C_BFROM&&C_BTO){try{applyCompare();}catch(e){}}
-    else{const n=$('#crangeNote');if(n&&HDATES.length)n.innerHTML=`بازه موجود: <b>${fmtD(mn)}</b> تا <b>${fmtD(mx)}</b> — تاریخ‌ها را انتخاب و «مقایسه کن» را بزنید.`;}
-    syncUnitLines();
+    else{const n=$('#crangeNote');if(n)n.innerHTML='';}    syncUnitLines();
   });
   const ha=$('#hApply');if(ha)ha.onclick=()=>applyHistory(false);
   const ca=$('#cApply');if(ca)ca.onclick=()=>applyCompare();

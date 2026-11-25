@@ -101,11 +101,19 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 @media(prefers-reduced-motion:reduce){.live i,.logoBox::after{animation:none}}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
-/* ---- tabs ---- */
-.tabs{display:flex;gap:6px;margin:10px 2px 4px;background:var(--chip);border:1px solid var(--line);border-radius:14px;padding:4px;position:sticky;top:6px;z-index:40}
-.tab{flex:1;border:0;background:none;color:var(--muted);font-family:inherit;font-size:13px;font-weight:800;padding:9px 2px;border-radius:10px;cursor:pointer;white-space:nowrap}
-.tab.on{background:var(--ink);color:var(--bg)}
-@media(max-width:480px){.tab{font-size:11.5px}}
+/* ---- tabs: modern 3D ---- */
+.tabs{display:flex;gap:8px;margin:12px 2px 6px;background:transparent;border:0;padding:0;position:sticky;top:6px;z-index:40}
+.tab{flex:1;position:relative;border:1px solid var(--line);font-family:inherit;font-size:13px;font-weight:900;padding:10px 2px 13px;border-radius:14px;cursor:pointer;white-space:nowrap;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.22),0 10px 22px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .12s ease,box-shadow .12s ease}
+#tabLeague{background:linear-gradient(180deg,rgba(245,179,1,.30),rgba(245,179,1,.10));border-color:rgba(201,150,0,.55)}
+#tabHistory{background:linear-gradient(180deg,rgba(56,189,248,.28),rgba(56,189,248,.09));border-color:rgba(56,189,248,.50)}
+#tabCompare{background:linear-gradient(180deg,rgba(244,114,182,.28),rgba(167,139,250,.10));border-color:rgba(200,120,220,.50)}
+.tab.on{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.28),0 4px 10px rgba(0,0,0,.20),inset 0 2px 8px rgba(0,0,0,.22)}
+.tab.on::after{content:"";position:absolute;bottom:4px;right:22%;left:22%;height:3px;border-radius:3px}
+#tabLeague.on::after{background:linear-gradient(90deg,transparent,#E9A800,transparent)}
+#tabHistory.on::after{background:linear-gradient(90deg,transparent,#38bdf8,transparent)}
+#tabCompare.on::after{background:linear-gradient(90deg,transparent,#f472b6,transparent)}
+@media(max-width:480px){.tab{font-size:11px;padding:9px 1px 11px}}
+[data-theme="light"] .tab{box-shadow:0 3px 0 rgba(60,50,20,.18),0 10px 20px rgba(60,50,20,.12),inset 0 1px 0 rgba(255,255,255,.8)}
 /* ---- filter card ---- */
 .fcard{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:var(--shadow);margin:8px 0}
 .frow{display:flex;gap:8px;flex-wrap:wrap}
@@ -134,16 +142,42 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .cday.today{border-color:var(--gold)}
 .calfoot{display:flex;gap:6px;margin-top:8px}
 .calfoot button{flex:1;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:8px;padding:6px;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer}
-/* ---- compare ---- */
-.cmpRange{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--drawer);flex:1 1 200px;min-width:0}
-.cmpRange h4{margin:0 0 6px;font-size:12px;text-align:center}
+/* ---- compare: one-row table ---- */
+.cmpRange{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--drawer);flex:1 1 220px;min-width:0}
+.cmpRange h4{margin:0 0 6px;font-size:12.5px;text-align:center;font-weight:900}
 .cmpRange.a h4{color:#38bdf8}.cmpRange.b h4{color:#f472b6}
-.cmpgrid{display:grid;grid-template-columns:1fr;gap:6px}
-@media(min-width:900px){.cmpgrid{grid-template-columns:1fr 1fr 1fr}}
-.cmpSec{background:rgba(127,140,160,.08);border:1px solid var(--line);border-radius:10px;padding:6px 4px}
-.cmpSec h5{margin:0 0 4px;font-size:11px;text-align:center}
-.cmpSec.a h5{color:#38bdf8}.cmpSec.b h5{color:#f472b6}.cmpSec.d h5{color:var(--gold)}
-.cmpSec small{display:block;text-align:center;font-size:9px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.selWrap{position:relative;margin-top:6px}
+.selBtn{width:100%;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:10px;padding:7px 10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.selBtn b{color:var(--gold)}
+.selPanel{display:none;position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.4);padding:8px;z-index:50;max-height:260px;overflow:auto}
+.selPanel.open{display:block}
+.selAll{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:900;padding:6px 8px;border-bottom:1px dashed var(--line);cursor:pointer}
+.sopt{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:5px 8px;cursor:pointer;border-radius:8px}
+.sopt:hover{background:var(--drawer)}
+.sopt input,.selAll input{width:16px;height:16px;accent-color:#E9A800;flex:none}
+.cmpOpts{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:10px;padding:8px;border:1px dashed var(--line);border-radius:12px;font-size:12px;font-weight:800}
+.optTitle{color:var(--muted);font-size:11.5px}
+.opt{display:flex;align-items:center;gap:6px;cursor:pointer}
+.opt input{width:16px;height:16px;accent-color:#E9A800}
+.cmptotal{background:linear-gradient(180deg,var(--card2),var(--card));border:1.5px solid var(--gold);border-radius:14px;box-shadow:var(--shadow);padding:10px;margin:8px 0}
+.cmptotal h4{margin:0 0 8px;font-size:13px;text-align:center;font-weight:900}
+.tgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+@media(max-width:640px){.tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.cmpScroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--card2),var(--card));box-shadow:var(--shadow)}
+.cmptable{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.cmptable th,.cmptable td{padding:7px 4px;font-size:12px;font-weight:800;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cmptable thead th{font-size:11px;color:var(--muted);background:var(--drawer)}
+.cmptable thead th.ca{color:#38bdf8}.cmptable thead th.cb{color:#f472b6}.cmptable thead th.cd{color:var(--gold)}
+.cmptable tbody tr:last-child td{border-bottom:0}
+.cmptable td.store{text-align:right;font-weight:900;font-size:12.5px;white-space:normal;min-width:104px}
+.cmptable tr.total td{background:rgba(245,179,1,.10);font-weight:900;border-top:1.5px solid var(--gold)}
+.cmptable.many{table-layout:fixed;width:100%}
+.cmptable.many th,.cmptable.many td{font-size:9.5px;padding:4px 1px}
+.cmptable.many td.store{font-size:10.5px;min-width:0}
+.cmptable.xmany{table-layout:auto;min-width:900px}
+.tag:empty{display:none}
+.cmptable.xmany th,.cmptable.xmany td{font-size:10px;padding:4px 2px}
+.hint{font-size:10.5px;color:var(--muted);text-align:center;padding:6px}
 .up{color:#22C55E!important}.dn{color:#F87171!important}
 .totalrow{border:1.5px solid var(--gold)!important}
 .hid{display:none!important}
@@ -187,12 +221,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 <div class="sec"><h2>⚖️ مقایسه دو بازه زمانی <span class="tag" id="cunitLine"></span></h2>
 <div class="fcard">
 <div class="frow">
-<div class="cmpRange a"><h4>بازه اول (A)</h4><div class="frow"><div class="fld"><label>از تاریخ</label><input class="dinput" id="cAFrom" readonly placeholder="انتخاب کنید"></div><div class="fld"><label>تا تاریخ</label><input class="dinput" id="cATo" readonly placeholder="انتخاب کنید"></div></div></div>
-<div class="cmpRange b"><h4>بازه دوم (B)</h4><div class="frow"><div class="fld"><label>از تاریخ</label><input class="dinput" id="cBFrom" readonly placeholder="انتخاب کنید"></div><div class="fld"><label>تا تاریخ</label><input class="dinput" id="cBTo" readonly placeholder="انتخاب کنید"></div></div></div>
+<div class="cmpRange a"><h4>بازه اول (A)</h4><div class="frow"><div class="fld"><label>از تاریخ</label><input class="dinput" id="cAFrom" readonly placeholder="انتخاب کنید"></div><div class="fld"><label>تا تاریخ</label><input class="dinput" id="cATo" readonly placeholder="انتخاب کنید"></div></div><div class="selWrap"><button class="selBtn" id="cASelBtn" type="button">🏪 فروشگاه‌های بازه اول: <b id="cASelCount"></b> ▾</button><div class="selPanel" id="cASelPanel"><label class="selAll"><input type="checkbox" id="cASelAll" checked> همه</label><div id="cASelList"></div></div></div></div>
+<div class="cmpRange b"><h4>بازه دوم (B)</h4><div class="frow"><div class="fld"><label>از تاریخ</label><input class="dinput" id="cBFrom" readonly placeholder="انتخاب کنید"></div><div class="fld"><label>تا تاریخ</label><input class="dinput" id="cBTo" readonly placeholder="انتخاب کنید"></div></div><div class="selWrap"><button class="selBtn" id="cBSelBtn" type="button">🏪 فروشگاه‌های بازه دوم: <b id="cBSelCount"></b> ▾</button><div class="selPanel" id="cBSelPanel"><label class="selAll"><input type="checkbox" id="cBSelAll" checked> همه</label><div id="cBSelList"></div></div></div></div>
 </div>
+<div class="cmpOpts"><span class="optTitle">➕ ستون‌های مبلغ به آخر جدول:</span><label class="opt"><input type="checkbox" id="cOptGross"> ناخالص</label><label class="opt"><input type="checkbox" id="cOptNet"> خالص</label><label class="opt"><input type="checkbox" id="cOptDisc"> تخفیف</label></div>
 <button class="abtn" id="cApply">مقایسه کن ⚖️</button>
 <div class="rnote" id="crangeNote"></div>
 </div>
+<div id="cmpTotal"></div>
 <div id="cmpWrap"></div>
 </div>
 </section>
