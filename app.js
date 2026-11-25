@@ -1,7 +1,9 @@
-let DATA=[], sortKey='net', sortDir=-1, openCode=null, unit='rial', gsortKey='net', gsortDir=-1;
+let DATA=[], sortKey='net', sortDir=-1, openCode=null, unit='toman', gsortKey='net', gsortDir=-1;
+let openG=new Set();
 const $=s=>document.querySelector(s);
 const fa=n=>Number(n).toLocaleString('fa-IR');
-const fmtM=t=> unit==='rial' ? Math.round(Number(t||0)/100000) : Math.round(Number(t||0)/1000000);
+// مبالغ ERP به ریال است: میلیون ریال = ریال/1,000,000 ، میلیون تومان = ریال/10,000,000
+const fmtM=t=> unit==='rial' ? Math.round(Number(t||0)/1000000) : Math.round(Number(t||0)/10000000);
 const unitLabel=()=> unit==='rial' ? 'میلیون ریال' : 'میلیون تومان';
 const unitBtnLabel=()=> unit==='rial' ? 'میلیون ریال ⇄' : 'میلیون تومان ⇄';
 const pct=r=> r.gross ? Math.round(r.disc/r.gross*100) : 0;
@@ -24,11 +26,22 @@ function sortGroups(list){
  else{ a.sort((x,y)=> (gval(x,gsortKey)-gval(y,gsortKey))*d); }
  return a;
 }
+function sortModels(list){
+ const a=[...(list||[])]; const d=gsortDir;
+ if(gsortKey==='name'){ a.sort((x,y)=> String(x.name).localeCompare(String(y.name),'fa', {numeric:true})*d); }
+ else{ a.sort((x,y)=> (gval(x,gsortKey)-gval(y,gsortKey))*d); }
+ return a;
+}
 async function fetchData(){
  try{const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});DATA=await r.json();}catch(e){}
- DATA.forEach(r=>{r.disc=(r.gross-r.net);(r.groups||[]).forEach(g=>{g.disc=g.gross-g.net;});});
+ DATA.forEach(r=>{r.disc=(r.gross-r.net);(r.groups||[]).forEach(g=>{g.disc=g.gross-g.net;(g.models||[]).forEach(m=>{m.disc=m.gross-m.net;});});});
 }
-function clock(){const d=new Date();const el=$('#clock');if(el)el.textContent=d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});}
+function tickClock(){
+ const d=new Date();
+ const c=$('#clock'); if(c) c.textContent=d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
+ const ld=$('#livedate');
+ if(ld){ try{ ld.textContent=d.toLocaleDateString('fa-IR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }catch(e){} }
+}
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('bf-theme',t);}catch(e){}
  const b=$('#themeBtn');if(b)b.textContent=(t==='dark'?'🌙 تاریک':'☀️ روشن');}
 function setUnit(u){unit=u;try{localStorage.setItem('bf-unit',u);}catch(e){}
@@ -69,8 +82,20 @@ function renderBoard(){
    metric('تخفیف',fa(fmtM(r.disc)))+
    metric('٪ تخفیف','٪'+fa(pct(r)));
   const glist=sortGroups(r.groups||[]);
-  const ghead=GSORTS.map(s=>`<div><button class="${gsortKey===s.k?'on':''}" data-gk="${s.k}">${s.t}${gsortKey===s.k?(gsortDir===-1?' ▼':' ▲'):''}</button></div>`).join('');
-  const grows=glist.map(g=>`<div class="grow"><div><b>${g.name}</b></div><div>${fa(g.qty)}</div><div>${fa(g.inv)}</div><div>${fa(fmtM(g.gross))}</div><div>${fa(fmtM(g.net))}</div><div>${fa(fmtM(g.disc))}</div><div>٪${fa(gpct(g))}</div></div>`).join('');
+  const ghead=`<div class="grow ghead">`+GSORTS.map(s=>`<div><button class="${gsortKey===s.k?'on':''}" data-gk="${s.k}">${s.t}${gsortKey===s.k?(gsortDir===-1?' ▼':' ▲'):''}</button></div>`).join('')+`</div>`;
+  const gitems=glist.map(g=>{
+   const gk=r.code+'|'+g.name;
+   const isOpen=openG.has(gk);
+   const mlist=sortModels(g.models||[]);
+   const mrows=mlist.map(m=>`<div class="mrow"><div><b>${m.name}</b></div><div>${fa(m.qty)}</div><div>${fa(m.inv)}</div><div>${fa(fmtM(m.gross))}</div><div>${fa(fmtM(m.net))}</div><div>${fa(fmtM(m.disc))}</div><div>٪${fa(gpct(m))}</div></div>`).join('');
+   const mhead=`<div class="mrow mhead"><div>مدل</div><div>فروش</div><div>فاکتور</div><div>ناخالص</div><div>خالص</div><div>تخفیف</div><div>٪</div></div>`;
+   return `<div class="gitem${isOpen?' open':''}">
+    <button class="grow" data-gk2="${gk.replace(/"/g,'')}">
+     <div><b>${g.name} <span class="mini">▾</span></b></div><div>${fa(g.qty)}</div><div>${fa(g.inv)}</div><div>${fa(fmtM(g.gross))}</div><div>${fa(fmtM(g.net))}</div><div>${fa(fmtM(g.disc))}</div><div>٪${fa(gpct(g))}</div>
+    </button>
+    <div class="mwrap"><div class="mtable">${mhead}${mrows}</div></div>
+   </div>`;
+  }).join('');
   return `<div class="row${openCode===r.code?' open':''}" style="--h:${h}">
    <button class="rowhead" data-code="${r.code}">
     <span class="rank ${rank<=3?'r'+rank:''}">${fa(rank)}</span>
@@ -79,7 +104,8 @@ function renderBoard(){
     <span class="chev">▾</span>
    </button>
    <div class="drawer"><h3>📦 کارگروه ${r.store} <span class="tag">${u}</span></h3>
-    <div class="gwrap"><div class="gtable"><div class="grow ghead">${ghead}</div>${grows}</div></div>
+    <p class="hint">روی هر کارگروه بزن تا مدل‌های آن باز شود • مدل‌ها با همان سورت کارگروه مرتب می‌شوند</p>
+    <div class="gwrap"><div class="gtable">${ghead}${gitems}</div></div>
    </div></div>`;
  }).join('');
  document.querySelectorAll('.rowhead').forEach(b=>b.onclick=()=>{
@@ -94,16 +120,25 @@ function renderBoard(){
   if(gsortKey===k)gsortDir*=-1;else{gsortKey=k;gsortDir=(k==='name'?1:-1);}
   renderBoard();
  });
+ document.querySelectorAll('button.grow[data-gk2]').forEach(b=>b.onclick=(e)=>{
+  e.stopPropagation();
+  const k=b.dataset.gk2;
+  const item=b.parentElement;
+  if(openG.has(k)){openG.delete(k);item.classList.remove('open');}
+  else{openG.add(k);item.classList.add('open');}
+ });
 }
 async function load(){
  let st=null,un=null;try{st=localStorage.getItem('bf-theme');un=localStorage.getItem('bf-unit');}catch(e){}
- setTheme(st||'dark'); unit=(un==='toman'?'toman':'rial');
+ setTheme(st||'dark');
+ // پیش‌فرض میلیون تومان؛ فقط اگر قبلا ریال ذخیره شده بود همان می‌ماند
+ unit=(un==='rial'?'rial':'toman');
  const ub=$('#unitBtn'); if(ub) ub.textContent=unitBtnLabel();
  $('#themeBtn').onclick=()=>{setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');};
  $('#unitBtn').onclick=()=>{setUnit(unit==='rial'?'toman':'rial');};
  await fetchData();
  renderTotals();renderBoard();
  setInterval(async()=>{await fetchData();renderTotals();renderBoard();},60000);
- setInterval(clock,1000);clock();
+ tickClock(); setInterval(tickClock,10000);
 }
 load();
