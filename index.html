@@ -102,7 +102,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 /* ---- tabs: modern 3D ---- */
-.tabs{display:flex;gap:8px;margin:12px 2px 6px;background:transparent;border:0;padding:0;position:sticky;top:6px;z-index:40}
+.tabs{display:flex;gap:8px;margin:12px 2px 6px;background:transparent;border:0;padding:0;position:static}
+.curtab{font-size:11px;font-weight:900;color:var(--gold);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:1px 14px;margin-top:2px;white-space:nowrap}
 .tab{flex:1;position:relative;border:1px solid var(--line);font-family:inherit;font-size:13px;font-weight:900;padding:10px 2px 13px;border-radius:14px;cursor:pointer;white-space:nowrap;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.22),0 10px 22px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .12s ease,box-shadow .12s ease}
 #tabLeague{background:linear-gradient(180deg,rgba(245,179,1,.30),rgba(245,179,1,.10));border-color:rgba(201,150,0,.55)}
 #tabHistory{background:linear-gradient(180deg,rgba(56,189,248,.28),rgba(56,189,248,.09));border-color:rgba(56,189,248,.50)}
@@ -165,11 +166,13 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 @media(max-width:640px){.tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .cmpScroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--card2),var(--card));box-shadow:var(--shadow)}
 .cmptable{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
-.cmptable th,.cmptable td{padding:7px 4px;font-size:12px;font-weight:800;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cmptable th,.cmptable td{padding:7px 4px;font-size:12px;font-weight:800;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums;overflow:hidden}
 .cmptable thead th{font-size:11px;color:var(--muted);background:var(--drawer)}
 .cmptable thead th.ca{color:#38bdf8}.cmptable thead th.cb{color:#f472b6}.cmptable thead th.cd{color:var(--gold)}
 .cmptable tbody tr:last-child td{border-bottom:0}
-.cmptable td.store{text-align:right;font-weight:900;font-size:12.5px;white-space:normal;min-width:104px}
+.cmptable th:first-child,.cmptable td.store{width:26%}
+.cmptable td.store{text-align:right;font-weight:900;font-size:12.5px;white-space:normal;overflow:hidden;line-height:1.6;overflow-wrap:break-word;min-width:0}
+@media(max-width:640px){.cmptable th,.cmptable td{padding:4px 1px;font-size:10px;letter-spacing:-.2px}.cmptable thead th{font-size:9px}.cmptable th:first-child,.cmptable td.store{width:27%}.cmptable td.store{font-size:11px;line-height:1.6;padding:4px 3px 4px 1px}}
 .cmptable tr.total td{background:rgba(245,179,1,.10);font-weight:900;border-top:1.5px solid var(--gold)}
 .cmptable.many{table-layout:fixed;width:100%}
 .cmptable.many th,.cmptable.many td{font-size:9.5px;padding:4px 1px}
@@ -184,7 +187,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 </style></head>
 <body><div class="wrap">
 <div class="top">
-<div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span><div><h1>لیگ بلک‌فرایدی سرژه</h1></div></div>
+<div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span><div><h1>لیگ بلک‌فرایدی سرژه</h1></div><div class="curtab" id="curTabName">🏆 لیگ بلک‌فرایدی</div></div>
 <div class="actions"><span class="live"><span class="liverow"><i></i>آپدیت: <b id="clock">--:--</b></span><span class="livedate" id="livedate"></span></span><button class="btn" id="unitBtn">میلیون تومان ⇄</button><button class="btn" id="themeBtn">🌙 تاریک</button></div>
 </div>
 <div class="tabs" role="tablist">
@@ -207,6 +210,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 <div class="fld"><label>از تاریخ</label><input class="dinput" id="hFrom" readonly placeholder="انتخاب کنید"></div>
 <div class="fld"><label>تا تاریخ</label><input class="dinput" id="hTo" readonly placeholder="انتخاب کنید"></div>
 </div>
+<div class="selWrap"><button class="selBtn" id="hSelBtn" type="button">🏪 فروشگاه‌ها: <b id="hSelCount"></b> ▾</button><div class="selPanel" id="hSelPanel"><label class="selAll"><input type="checkbox" id="hSelAll" checked> همه</label><div id="hSelList"></div></div></div>
 <button class="abtn" id="hApply">نمایش گزارش بازه ✔</button>
 <div class="chips" id="hChips"></div>
 <div class="rnote" id="hrangeNote"></div>

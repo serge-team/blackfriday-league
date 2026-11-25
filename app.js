@@ -237,6 +237,7 @@ load();
 /* ================= تب‌ها + تاریخ شمسی + سابقه و مقایسه ================= */
 let HROWS=[], HDATES=[], HDATA=[], HDAILY=[], DETAIL_FROM='', DETAIL_DAYS=45;
 let H_FROM='', H_TO='', hsortKey='net', hsortDir=-1, hOpenCode=null, hOpenG=new Set();
+let H_SEL=new Set(), H_BUILT=false, H_UI=false;
 let CAL_FOR=null, CAL_Y=1405, CAL_M=9;
 const FA_D='۰۱۲۳۴۵۶۷۸۹';
 const en2fa=s=>String(s).replace(/[0-9]/g,d=>FA_D[d]);
@@ -260,6 +261,7 @@ function todayJal(){try{const n=new Date(new Date().toLocaleString('en-US',{time
 function parseJ(s){s=fa2en(s);const p=s.split('/');return [parseInt(p[0]||'1405'),parseInt(p[1]||'1'),parseInt(p[2]||'1')];}
 function fmtD(s){return en2fa(s);}
 function jWeekday(jy,jm,jd){const[gy,gm,gd]=jal2greg(jy,jm,jd);const dt=new Date(Date.UTC(gy,gm-1,gd));const w=dt.getUTCDay();return (w+1)%7;}
+const TAB_NAMES={League:'🏆 لیگ بلک‌فرایدی',History:'🗓️ سابقه فروش',Compare:'⚖️ مقایسه دو بازه'};
 function switchTab(which){
   ['League','History','Compare'].forEach(k=>{
     const sec=$('#sec'+k), tab=$('#tab'+k);
@@ -267,6 +269,7 @@ function switchTab(which){
     if(sec)sec.classList.toggle('hid',!on);
     if(tab)tab.classList.toggle('on',on);
   });
+  const cn=$('#curTabName'); if(cn&&TAB_NAMES[which])cn.textContent=TAB_NAMES[which];
   try{localStorage.setItem('bf-tab',which);}catch(e){}
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -323,16 +326,18 @@ function bindDateInputs(){
 }
 
 /* ---------- سابقه: تجمیع بازه ---------- */
-function aggRange(a,b){
+function aggRange(a,b,sel){
   a=normD(fa2en(a));b=normD(fa2en(b));
   if(!a||!b)return [];
   if(cmpD(a,b)>0){const t=a;a=b;b=t;}
   const useDaily=(HDAILY&&HDAILY.length)?true:false;
   // جمع فروشگاهی دقیق از daily (کل تاریخ) + جزئیات کارگروه/مدل از rows (روزهای اخیر)
   const smap=new Map();
+  const hsel=(sel&&sel.size)?sel:(typeof H_SEL!=='undefined'&&H_SEL&&H_SEL.size?H_SEL:null);
   if(useDaily){
     for(const r of HDAILY){
       if(!inRange(r.d,a,b))continue;
+      if(hsel&&!hsel.has(ckey(r.code,r.store)))continue;
       const k=r.code+'|'+r.store;
       let s=smap.get(k);
       if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0};smap.set(k,s);}
@@ -343,6 +348,7 @@ function aggRange(a,b){
   const tkey=(r,sr)=>r.d+'|'+r.code+'-'+sr;
   for(const r of HROWS){
     if(!inRange(r.d,a,b))continue;
+    if(hsel&&!hsel.has(ckey(r.code,r.store)))continue;
     const k=r.code+'|'+r.store;
     let s=dmap.get(k);
     if(!s){s={cats:new Map()};dmap.set(k,s);}
@@ -373,6 +379,7 @@ function aggRange(a,b){
     const map=new Map();
     for(const r of HROWS){
       if(!inRange(r.d,a,b))continue;
+      if(hsel&&!hsel.has(ckey(r.code,r.store)))continue;
       const k=r.code+'|'+r.store;
       let s=map.get(k);
       if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0,cats:new Map(),_ss:new Set(),_ex:0};map.set(k,s);}
@@ -467,6 +474,62 @@ function applyHistory(silent){
     let extra='';
     if(DETAIL_FROM&&cmpD(f,DETAIL_FROM)<0){extra=`<br><span style="font-size:11px;color:var(--muted)">⚠️ جزئیات کارگروه/مدل فقط از ${fmtD(DETAIL_FROM)} به بعد ذخیره شده — جمع فروشگاه‌ها برای کل بازه کامل است.</span>`;}
     n.innerHTML=`گزارش بازه <b>${fmtD(f)}</b> تا <b>${fmtD(t2)}</b> — <b>${fa(HDATA.length)}</b> فروشگاه، <b>${fa(q)}</b> قلم فروش${extra}`;markHChip();}
+}
+
+/* ---------- سابقه: انتخاب فروشگاه ---------- */
+function saveHSel(){try{localStorage.setItem('bf-hSel',JSON.stringify([...H_SEL]));}catch(e){}}
+function updateHSelCounts(){
+  const n=getAllStores().length||0;
+  const c=$('#hSelCount'); if(c)c.textContent=fa(H_SEL.size)+'/'+fa(n);
+  const all=$('#hSelAll'); if(all){all.checked=H_SEL.size>0&&H_SEL.size===n; all.indeterminate=H_SEL.size>0&&H_SEL.size<n;}
+}
+function autoRehistory(){
+  if(!H_FROM||!H_TO)return;
+  if(!($('#hFrom')&&$('#hFrom').value&&$('#hTo')&&$('#hTo').value))return;
+  if(!H_SEL.size)return;
+  try{applyHistory(true);}catch(e){}
+}
+function buildHistoryStores(){
+  const all=getAllStores();
+  const keys=all.map(s=>ckey(s.code,s.store));
+  if(!H_BUILT){
+    try{
+      const raw=localStorage.getItem('bf-hSel');
+      if(raw==null){H_SEL=new Set(keys);}
+      else{const arr=JSON.parse(raw); const ok=Array.isArray(arr)?arr.filter(x=>keys.includes(x)):[]; H_SEL=new Set(ok.length?ok:keys);}
+    }catch(e){H_SEL=new Set(keys);}
+    H_BUILT=true;
+  }else{
+    let known=[]; try{known=JSON.parse(localStorage.getItem('bf-hKeys')||'[]');}catch(e){known=[];}
+    keys.forEach(k=>{if(!H_SEL.has(k)&&!known.includes(k))H_SEL.add(k);});
+  }
+  try{localStorage.setItem('bf-hKeys',JSON.stringify(keys));}catch(e){}
+  const list=$('#hSelList');
+  if(list)list.innerHTML=all.map(s=>{
+    const k=ckey(s.code,s.store);
+    return `<label class="sopt"><input type="checkbox" data-k="${k.replace(/"/g,'')}"${H_SEL.has(k)?' checked':''}><span>${s.store}</span></label>`;
+  }).join('')||'<div style="padding:6px;color:var(--muted);font-size:11px">فروشگاهی نیست</div>';
+  if(list)list.querySelectorAll('input').forEach(inp=>inp.onchange=()=>{
+    const k=inp.dataset.k;
+    if(inp.checked)H_SEL.add(k); else H_SEL.delete(k);
+    saveHSel();updateHSelCounts();autoRehistory();
+  });
+  updateHSelCounts();
+}
+function wireHistoryUI(){
+  if(H_UI)return; H_UI=true;
+  const b=$('#hSelBtn'),pn=$('#hSelPanel');
+  if(b&&pn)b.onclick=e=>{e.stopPropagation();pn.classList.toggle('open');};
+  document.addEventListener('click',e=>{
+    if(e.target&&e.target.closest&&e.target.closest('.selWrap'))return;
+    const p2=$('#hSelPanel'); if(p2)p2.classList.remove('open');
+  });
+  const all=$('#hSelAll');
+  if(all)all.onchange=()=>{
+    const keys=getAllStores().map(s=>ckey(s.code,s.store));
+    H_SEL=new Set(all.checked?keys:[]);
+    saveHSel();buildHistoryStores();autoRehistory();
+  };
 }
 
 /* ---------- مقایسه دو بازه: جدول تک‌ردیفه ---------- */
@@ -710,7 +773,10 @@ function renderCompare(){
   const head=`<thead><tr><th style="text-align:right">فروشگاه</th>${cols.map(c=>`<th class="${c.c}">${c.t}</th>`).join('')}</tr></thead>`;
   const body=CMP.rows.map(r=>`<tr><td class="store">${r.store}</td>${cols.map(c=>cmpCell(r,c)).join('')}</tr>`).join('');
   const tds=cols.map(c=>cmpCell(t,c)).join('');
-  el.innerHTML=`<div class="cmpScroll"><table class="cmptable ${cls}">${head}<tbody>${body}<tr class="total"><td class="store">جمع کل</td>${tds}</tr></tbody></table>${cls?`<div class="hint">◀ برای دیدن همه ستون‌ها جدول را به چپ بکشید ▶${cmpMoneyOn()?` — مبالغ به ${u}`:''}</div>`:''}</div>`;
+  let cg='';
+  if(!cls){const sw=27,dw=(100-sw)/cols.length;cg=`<colgroup><col style="width:${sw}%">`+cols.map(()=>`<col style="width:${dw.toFixed(2)}%">`).join('')+`</colgroup>`;}
+  else if(cls==='many'){const sw=19,dw=(100-sw)/cols.length;cg=`<colgroup><col style="width:${sw}%">`+cols.map(()=>`<col style="width:${dw.toFixed(2)}%">`).join('')+`</colgroup>`;}
+  el.innerHTML=`<div class="cmpScroll"><table class="cmptable ${cls}">${cg}${head}<tbody>${body}<tr class="total"><td class="store">جمع کل</td>${tds}</tr></tbody></table>${cls?`<div class="hint">◀ برای دیدن همه ستون‌ها جدول را به چپ بکشید ▶${cmpMoneyOn()?` — مبالغ به ${u}`:''}</div>`:''}</div>`;
   syncCmpUnit();
 }
 
@@ -755,10 +821,7 @@ async function fetchHistory(){
 function refreshHistoryLive(){/* تاریخ‌ها ثابت می‌مانند؛ فقط اگر داده تازه آمد بازخوانی کن */ }
 function bootTabs(){
   bindDateInputs();
-  try{
-    const st=localStorage.getItem('bf-tab');
-    if(st&&['League','History','Compare'].includes(st))switchTab(st);else switchTab('League');
-  }catch(e){switchTab('League');}
+  switchTab('League');
   $('#tabLeague').onclick=()=>switchTab('League');
   $('#tabHistory').onclick=()=>switchTab('History');
   $('#tabCompare').onclick=()=>switchTab('Compare');
@@ -771,6 +834,7 @@ function bootTabs(){
     if($('#hFrom'))$('#hFrom').value=H_FROM?en2fa(H_FROM):'';
     if($('#hTo'))$('#hTo').value=H_TO?en2fa(H_TO):'';
     buildChips();
+    try{buildHistoryStores();wireHistoryUI();}catch(e){}
     if(H_FROM&&H_TO&&HROWS.length){applyHistory(true);
       const n=$('#hrangeNote');
       if(!HDATA.length&&n)n.innerHTML='در این بازه فروشی ثبت نشده است.';
