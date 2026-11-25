@@ -57,7 +57,7 @@ function renderTotals(){
   {h:205,l:'تعداد فاکتور',v:fa(iv),u:'فاکتور'},
   {h:160,l:'ناخالص',v:fa(fmtM(g)),u:u},
   {h:285,l:'خالص',v:fa(fmtM(n)),u:u},
-  {h:5,l:'تخفیف',v:fa(fmtM(dd)),u:u},
+  {h:5,l:'مبلغ تخفیف',v:fa(fmtM(dd)),u:u},
   {h:30,l:'٪ تخفیف',v:'٪'+fa(p),u:'میانگین'},
   {h:200,l:'فروش اعتباری',v:fa(fmtM(cr)),u:'٪'+fa(shr)+' از خالص'}
  ];
@@ -94,10 +94,10 @@ function renderBoard(){
    if(!mlist.length){
     mbody=`<div style="padding:10px;text-align:center;color:var(--muted);font-size:11px">برای این کارگروه مدلی ثبت نشده — data.json جدید (مدل‌دار) را جایگزین کنید</div>`;
    } else {
-    const mhead=`<div class="mrow mhead"><div>مدل</div><div>فروش</div><div>فاکتور</div><div>ناخالص</div><div>خالص</div><div>تخفیف</div><div>٪</div><div>عکس</div></div>`;
+    const mhead=`<div class="mrow mhead"><div>مدل</div><div>فروش</div><div>فاکتور</div><div>ناخالص</div><div>خالص</div><div>تخفیف</div><div>٪</div><div>📷</div></div>`;
     const mrows=mlist.map(m=>{
      const kw='https://www.sergestyle.com/product?keyword='+encodeURIComponent(m.name);
-     return `<div class="mrow"><div><b>${m.name}</b></div><div>${fa(m.qty)}</div><div>${fa(m.inv)}</div><div>${fa(fmtM(m.gross))}</div><div>${fa(fmtM(m.net))}</div><div>${fa(fmtM(m.disc))}</div><div>٪${fa(gpct(m))}</div><div><a class="pbtn" href="${kw}" target="_blank" rel="noopener">📷 عکس</a></div></div>`;
+     return `<div class="mrow"><div><b>${m.name}</b></div><div>${fa(m.qty)}</div><div>${fa(m.inv)}</div><div>${fa(fmtM(m.gross))}</div><div>${fa(fmtM(m.net))}</div><div>${fa(fmtM(m.disc))}</div><div>٪${fa(gpct(m))}</div><div><a class="pbtn" href="${kw}" target="_blank" rel="noopener">📷</a></div></div>`;
     }).join('');
     mbody=mhead+mrows;
    }

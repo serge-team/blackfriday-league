@@ -18,11 +18,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .wrap{max-width:1180px;margin:0 auto;padding:0 10px 40px;position:relative}
 .top{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 2px 6px;text-align:center}
 .brand{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;text-align:center}
-.logoBox{position:relative;width:72px;height:27px;border-radius:6px;background:#0B0D12;border:1px solid rgba(245,179,1,.45);display:grid;place-items:center;overflow:hidden;flex:none;box-shadow:0 6px 18px rgba(0,0,0,.35)}
-.logoBox img{width:58px;height:auto;display:block}
+.logoBox{position:relative;width:79px;height:30px;border-radius:6px;background:#0B0D12;border:1px solid rgba(245,179,1,.45);display:grid;place-items:center;overflow:hidden;flex:none;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.logoBox img{width:64px;height:auto;display:block}
 .logoBox::after{content:"";position:absolute;top:-60%;bottom:-60%;width:26%;left:-40%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35) 50%,transparent);transform:skewX(-18deg);animation:shine 9s ease-in-out infinite}
 @keyframes shine{0%,60%{left:-40%}95%,100%{left:130%}}
-.brand h1{margin:1px 0 0;font-size:11.5px;font-weight:800;line-height:1.5;white-space:nowrap;text-align:center}
+.brand h1{margin:1px 0 0;font-size:12.7px;font-weight:800;line-height:1.5;white-space:nowrap;text-align:center}
 .brand p{margin:0;font-size:7.5px;color:var(--muted);text-align:center}
 .actions{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
 .live{display:flex;flex-direction:column;align-items:center;gap:0;background:var(--chip);border:1px solid var(--line);border-radius:14px;padding:5px 14px 4px;line-height:1.7}
@@ -42,7 +42,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .kpi b{display:block;font-size:clamp(12px,3vw,20px);font-weight:900;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.7;letter-spacing:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .kpi span{display:block;font-size:clamp(6.5px,1.7vw,9.5px);font-weight:700;color:var(--muted);white-space:nowrap;line-height:1.7}
 @media(max-width:640px){.totals{gap:2px}.kpi{padding:7px 0 6px;border-radius:10px}.kpi b{letter-spacing:-.3px}}
-.toolbar{display:flex;gap:8px;margin:4px 0 10px;flex-wrap:wrap}
+.toolbar{display:flex;flex-direction:column;gap:6px;margin:4px 0 10px}.sortlabel{font-size:12px;font-weight:800;color:var(--muted)}
 .sortbar{display:flex;gap:5px;flex-wrap:wrap;width:100%}
 .sbtn{flex:1 1 auto;white-space:nowrap;border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:6px 10px;font-family:inherit;font-size:12px;cursor:pointer}
 .sbtn.on{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
@@ -89,12 +89,12 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .mwrap{display:none;padding:5px 2px 7px}
 .gitem.open .mwrap{display:block}
 .mtable{display:flex;flex-direction:column;gap:3px;background:var(--nest);border:1px dashed var(--line);border-radius:8px;padding:6px 5px}
-.mrow{display:grid;grid-template-columns:1fr repeat(6,minmax(0,1fr)) 46px;gap:4px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:4px 3px;font-size:11.5px;font-weight:800;text-align:center}
-.mrow.mhead{background:none;border:0;color:var(--muted);font-size:9px;padding:0 3px}
-.mrow b{font-size:13px;font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums}
-.mrow div{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;font-weight:700}
-@media(max-width:640px){.mrow{font-size:10.5px;font-weight:800;padding:3px 1px;gap:2px;grid-template-columns:1fr repeat(6,minmax(0,1fr)) 38px}.mrow b{font-size:11.5px;font-weight:900}.mrow.mhead{font-size:7.5px}}
-.pbtn{display:inline-block;text-decoration:none;border:1px solid rgba(245,179,1,.55);background:linear-gradient(180deg,rgba(245,179,1,.22),rgba(245,179,1,.08));color:var(--ink);border-radius:8px;padding:3px 2px;font-family:inherit;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;line-height:1.6;text-align:center}
+.mrow{display:grid;grid-template-columns:minmax(70px,1.7fr) repeat(6,minmax(0,.82fr)) 34px;gap:2px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:4px 3px;font-size:11.5px;font-weight:800;text-align:center}
+.mrow.mhead{background:none;border:0;color:var(--muted);font-size:9px;padding:0 2px}
+.mrow b{font-size:12px;font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums;overflow:visible}
+.mrow div{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:center;font-weight:800;font-size:.94em}.mrow div:first-child{overflow:visible;text-overflow:clip}
+@media(max-width:640px){.mrow{font-size:9.5px;font-weight:800;padding:3px 1px;gap:2px;grid-template-columns:minmax(64px,1.6fr) repeat(6,minmax(0,.8fr)) 30px}.mrow b{font-size:11px;font-weight:900}.mrow.mhead{font-size:7.5px}}
+.pbtn{display:inline-block;text-decoration:none;border:1px solid rgba(245,179,1,.55);background:linear-gradient(180deg,rgba(245,179,1,.22),rgba(245,179,1,.08));color:var(--ink);border-radius:7px;padding:2px 0;font-family:inherit;font-size:12px;font-weight:800;min-width:26px;cursor:pointer;white-space:nowrap;line-height:1.6;text-align:center}
 .pbtn:active{transform:scale(.96)}
 .foot{margin:22px 0 6px;text-align:center;font-size:10.5px;letter-spacing:.4px;color:var(--muted)}
 .foot b{background:linear-gradient(90deg,#8a6400,#c99600,#8a6400);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;letter-spacing:1px}
@@ -103,12 +103,12 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 </style></head>
 <body><div class="wrap">
 <div class="top">
-<div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span><div><h1>لیگ بلک‌فرایدی سرژه</h1><p>جدول زنده فروشگاه‌ها</p></div></div>
-<div class="actions"><span class="live"><span class="liverow"><i></i>زنده <b id="clock">--:--</b></span><span class="livedate" id="livedate"></span></span><button class="btn" id="unitBtn">میلیون تومان ⇄</button><button class="btn" id="themeBtn">🌙 تاریک</button></div>
+<div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span><div><h1>لیگ بلک‌فرایدی سرژه</h1></div></div>
+<div class="actions"><span class="live"><span class="liverow"><i></i>آپدیت: <b id="clock">--:--</b></span><span class="livedate" id="livedate"></span></span><button class="btn" id="unitBtn">میلیون تومان ⇄</button><button class="btn" id="themeBtn">🌙 تاریک</button></div>
 </div>
 <div class="sec"><h2>📊 خلاصه فروش فروشگاه‌های سرژه</h2><div class="totals" id="totals"></div></div>
 <div class="sec"><h2>📊 جدول لیگ — فروشگاه‌ها <span class="tag" id="countLine"></span> <span class="tag" id="unitLine"></span></h2>
-<div class="toolbar"><div class="sortbar" id="sortbar"></div></div>
+<div class="toolbar"><div class="sortlabel">سورت بر اساس:</div><div class="sortbar" id="sortbar"></div></div>
 <div class="head" id="headRow"></div>
 <div id="league"></div>
 </div>
