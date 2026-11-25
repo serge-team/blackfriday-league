@@ -33,21 +33,23 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .sec{margin-top:10px}
 .sec h2{font-size:14.5px;margin:12px 2px 8px;display:flex;align-items:center;gap:8px}
 .tag{font-size:11px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:1px 10px;color:var(--muted)}
-.pods{display:grid;grid-template-columns:1fr;gap:10px}
-.pod{border-radius:18px;padding:14px 12px 12px;text-align:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.18);box-shadow:var(--shadow);min-height:100%}
+.pods-sec{margin-top:12px}
+.pods{display:grid;grid-template-columns:1fr;gap:8px}
+.pod{border-radius:15px;padding:10px 10px 9px;text-align:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.18);box-shadow:var(--shadow);min-height:100%}
 .pod::after{content:"";position:absolute;top:-70%;bottom:-70%;width:24%;left:-45%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.38) 50%,transparent);transform:skewX(-18deg);animation:shine 11s ease-in-out infinite;pointer-events:none;opacity:.55}
 .pod.gold{order:1;background:linear-gradient(155deg,#5e4300,#c99600 30%,#ffe9a8 50%,#c99600 70%,#5e4300);color:#241a00}
 .pod.silver{order:2;background:linear-gradient(155deg,#4b5563,#9fb0c3 30%,#ffffff 50%,#9fb0c3 70%,#4b5563);color:#1a2230}
 .pod.bronze{order:3;background:linear-gradient(155deg,#4e2c0d,#b26a24 30%,#f7c88f 50%,#b26a24 70%,#4e2c0d);color:#26130a}
 @media(min-width:760px){.pods{grid-template-columns:1fr 1.08fr 1fr;align-items:end}.pod.silver{order:1}.pod.gold{order:2;transform:translateY(-8px)}.pod.bronze{order:3}}
-.pod .md{font-size:22px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
-.pod .nm{font-weight:700;font-size:15px;margin-top:2px;text-align:center;line-height:1.6}
-.pod .rk{display:inline-block;margin-top:5px;font-size:11.5px;font-weight:700;background:rgba(0,0,0,.30);color:#fff;border-radius:999px;padding:2px 12px}
-.pod .grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
-.pcell{background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.7);border-radius:12px;padding:6px 6px 5px;text-align:center;box-shadow:inset 0 1px 0 #fff,0 3px 10px rgba(0,0,0,.12)}
-.pcell small{display:block;font-size:10.5px;color:#4b4b4b;line-height:1.7;text-align:center}
-.pcell b{font-size:15px;color:#111;text-align:center;display:block;line-height:1.5}
-.pod .unit{margin-top:8px;font-size:10.5px;background:rgba(255,255,255,.45);border-radius:999px;display:inline-block;padding:1px 12px;color:#333}
+.pod .md{font-size:19px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));line-height:1}
+.pod .nm{font-weight:700;font-size:13.5px;margin-top:3px;text-align:center;line-height:1.5}
+.pod .rk{display:inline-block;margin-top:4px;font-size:10.5px;font-weight:700;background:rgba(0,0,0,.30);color:#fff;border-radius:999px;padding:1px 11px}
+.ptable{background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.8);border-radius:11px;overflow:hidden;margin-top:8px;box-shadow:inset 0 1px 0 #fff,0 3px 10px rgba(0,0,0,.12)}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:3px 10px;font-size:12px;border-bottom:1px solid rgba(0,0,0,.07);line-height:1.9}
+.prow:last-child{border-bottom:0}
+.prow:nth-child(odd){background:rgba(0,0,0,.025)}
+.prow .k{color:#454545;font-size:11px}
+.prow .v{font-weight:700;color:#111;font-size:13px;font-variant-numeric:tabular-nums}
 .totals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 6px}
 @media(min-width:560px){.totals{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:900px){.totals{grid-template-columns:repeat(6,1fr)}}
@@ -102,8 +104,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 <div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span><div><h1>لیگ بلک‌فرایدی</h1><p>سرژه • جدول زنده فروشگاه‌ها</p></div></div>
 <div class="actions"><span class="live"><i></i>زنده <b id="clock">--:--</b></span><button class="btn" id="unitBtn">میلیون ریال</button><button class="btn" id="themeBtn">🌙 تاریک</button></div>
 </div>
-<div class="sec"><h2>🏆 سه صدرنشین</h2><div class="pods" id="pods"></div></div>
-<div class="sec"><h2>📊 خلاصه جمع</h2><div class="totals" id="totals"></div></div>
+<div class="sec pods-sec"><div class="pods" id="pods"></div></div>
+<div class="sec"><h2>📊 خلاصه فروش فروشگاه‌ها</h2><div class="totals" id="totals"></div></div>
 <div class="sec"><h2>📊 جدول لیگ — فروشگاه‌ها <span class="tag" id="countLine"></span></h2>
 <div class="toolbar"><input class="search" id="q" placeholder="جست‌وجو: نام فروشگاه یا کارگروه…"><div class="sortbar" id="sortbar"></div></div>
 <div class="head" id="headRow"></div>
