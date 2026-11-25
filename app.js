@@ -43,16 +43,31 @@ async function fetchData(){
   else{
    DATA=(j.stores||j.data||[]);
    if(j.updated_at){ LAST_UPDATE=new Date(j.updated_at); } else if(lm){ LAST_UPDATE=new Date(lm); }
-   // تک‌فایل: تاریخچه داخل همان data.json است
+   // تک‌فایل v2: daily=جمع روزانه کل تاریخ، rows=جزئیات مدل روزهای اخیر
    try{
-    if(j.rows&&j.rows.length){
-     HROWS=j.rows.map(x=>({...x,d:normD(x.d)}));
-     HDATES=[...((j.dates&&j.dates.length?j.dates:j.rows.map(x=>x.d)))].map(normD).filter(Boolean);
-     HDATES=[...new Set(HDATES)].sort();
-     LEAGUE_DATE=normD(j.league_date||j.max_date||HDATES[HDATES.length-1]||'');
-    } else if(j.min_date&&j.max_date){
-     HDATES=[]; LEAGUE_DATE=normD(j.league_date||j.max_date||'');
+    HDAILY=Array.isArray(j.daily)?j.daily.map(x=>({...x,d:normD(x.d)})):[];
+    HROWS=Array.isArray(j.rows)?j.rows.map(x=>({...x,d:normD(x.d)})):[];
+    // سازگاری عقب‌رو: فایل قدیمی بدون daily
+    if(!HDAILY.length&&HROWS.length){
+     const m=new Map();
+     for(const r of HROWS){
+       const k=r.code+'|'+r.store;
+       let s=m.get(k); if(!s){s={d:r.d,code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0};m.set(k,s);}
+     }
+     // جمع روزانه را از روی سطرهای جزئیات می‌سازیم (تک‌روزه دقیق است)
+     const dmap=new Map();
+     for(const r of HROWS){
+       const k=r.d+'|'+r.code+'|'+r.store;
+       let s=dmap.get(k); if(!s){s={d:r.d,code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0};dmap.set(k,s);}
+       s.qty+=r.qty;s.gross+=r.gross;s.net+=r.net;s.credit+=(r.credit||0);s.inv+=(r.inv||0);
+     }
+     HDAILY=[...dmap.values()];
     }
+    HDATES=[...((j.dates&&j.dates.length?j.dates:[...HDAILY.map(x=>x.d),...HROWS.map(x=>x.d)]))].map(normD).filter(Boolean);
+    HDATES=[...new Set(HDATES)].sort();
+    LEAGUE_DATE=normD(j.league_date||j.max_date||HDATES[HDATES.length-1]||'');
+    DETAIL_FROM=normD(j.detail_from||'');
+    DETAIL_DAYS=+(j.detail_days||0)||0;
    }catch(e){}
   }
  }catch(e){}
@@ -182,7 +197,7 @@ async function load(){
 load();
 
 /* ================= تب‌ها + تاریخ شمسی + سابقه و مقایسه ================= */
-let HROWS=[], HDATES=[], HDATA=[];
+let HROWS=[], HDATES=[], HDATA=[], HDAILY=[], DETAIL_FROM='', DETAIL_DAYS=45;
 let H_FROM='', H_TO='', hsortKey='net', hsortDir=-1, hOpenCode=null, hOpenG=new Set();
 let C_AFROM='', C_ATO='', C_BFROM='', C_BTO='', CMP={a:[],b:[],rows:[],tot:{}}, cmpSortKey='netB', cmpSortDir=-1;
 let CAL_FOR=null, CAL_Y=1405, CAL_M=9;
@@ -275,31 +290,74 @@ function aggRange(a,b){
   a=normD(fa2en(a));b=normD(fa2en(b));
   if(!a||!b)return [];
   if(cmpD(a,b)>0){const t=a;a=b;b=t;}
-  const map=new Map();
+  const useDaily=(HDAILY&&HDAILY.length)?true:false;
+  // جمع فروشگاهی دقیق از daily (کل تاریخ) + جزئیات کارگروه/مدل از rows (روزهای اخیر)
+  const smap=new Map();
+  if(useDaily){
+    for(const r of HDAILY){
+      if(!inRange(r.d,a,b))continue;
+      const k=r.code+'|'+r.store;
+      let s=smap.get(k);
+      if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0};smap.set(k,s);}
+      s.qty+=r.qty;s.inv+=(r.inv||0);s.gross+=r.gross;s.net+=r.net;s.credit+=(r.credit||0);
+    }
+  }
+  const dmap=new Map();
   const tkey=(r,sr)=>r.d+'|'+r.code+'-'+sr;
   for(const r of HROWS){
     if(!inRange(r.d,a,b))continue;
     const k=r.code+'|'+r.store;
-    let s=map.get(k);
-    if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0,cats:new Map(),_ss:new Set(),_ex:0};map.set(k,s);}
-    s.qty+=r.qty;s.gross+=r.gross;s.net+=r.net;s.credit+=(r.credit||0);
-    if(r.s&&r.s.length){ for(const sr of r.s){ s._ss.add(tkey(r,sr)); } } else { s._ex+= (r.inv||0); }
+    let s=dmap.get(k);
+    if(!s){s={cats:new Map()};dmap.set(k,s);}
     let c=s.cats.get(r.cat);
-    if(!c){c={name:r.cat,qty:0,inv:0,gross:0,net:0,serials:0,models:new Map(),_ss:new Set(),_ex:0};s.cats.set(r.cat,c);}
+    if(!c){c={name:r.cat,qty:0,gross:0,net:0,models:new Map(),_ss:new Set(),_ex:0};s.cats.set(r.cat,c);}
     c.qty+=r.qty;c.gross+=r.gross;c.net+=r.net;
     if(r.s&&r.s.length){ for(const sr of r.s){ c._ss.add(tkey(r,sr)); } } else { c._ex+=(r.inv||0); }
     let m=c.models.get(r.model);
-    if(!m){m={name:r.model,qty:0,inv:0,gross:0,net:0,_ss:new Set(),_ex:0};c.models.set(r.model,m);}
+    if(!m){m={name:r.model,qty:0,gross:0,net:0,_ss:new Set(),_ex:0};c.models.set(r.model,m);}
     m.qty+=r.qty;m.gross+=r.gross;m.net+=r.net;
     if(r.s&&r.s.length){ for(const sr of r.s){ m._ss.add(tkey(r,sr)); } } else { m._ex+=(r.inv||0); }
   }
-  const out=[...map.values()].map(s=>{
-    const cats=[...s.cats.values()].map(c=>{
-      const mods=[...c.models.values()].map(m=>({name:m.name,qty:m.qty,inv:(m._ss.size+m._ex),gross:m.gross,net:m.net,disc:m.gross-m.net})).sort((x,y)=>y.net-x.net);
-      return {name:c.name,qty:c.qty,inv:(c._ss.size+c._ex),gross:c.gross,net:c.net,disc:c.gross-c.net,models:mods};
+  let out=[];
+  if(useDaily){
+    out=[...smap.values()].map(s=>{
+      const dd=dmap.get(s.code+'|'+s.store);
+      let cats=[];
+      if(dd){
+        cats=[...dd.cats.values()].map(c=>{
+          const mods=[...c.models.values()].map(m=>({name:m.name,qty:m.qty,inv:(m._ss.size+m._ex),gross:m.gross,net:m.net,disc:m.gross-m.net})).sort((x,y)=>y.net-x.net);
+          return {name:c.name,qty:c.qty,inv:(c._ss.size+c._ex),gross:c.gross,net:c.net,disc:c.gross-c.net,models:mods};
+        }).sort((x,y)=>y.net-x.net);
+      }
+      return {code:s.code,store:s.store,qty:s.qty,inv:s.inv,gross:s.gross,net:s.net,disc:s.gross-s.net,credit:s.credit,groups:cats,noDetail:!dd};
     }).sort((x,y)=>y.net-x.net);
-    return {code:s.code,store:s.store,qty:s.qty,inv:(s._ss.size+s._ex),gross:s.gross,net:s.net,disc:s.gross-s.net,credit:s.credit,groups:cats};
-  }).sort((x,y)=>y.net-x.net);
+  } else {
+    // سازگاری عقب‌رو: فایل قدیمی بدون daily
+    const map=new Map();
+    for(const r of HROWS){
+      if(!inRange(r.d,a,b))continue;
+      const k=r.code+'|'+r.store;
+      let s=map.get(k);
+      if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0,cats:new Map(),_ss:new Set(),_ex:0};map.set(k,s);}
+      s.qty+=r.qty;s.gross+=r.gross;s.net+=r.net;s.credit+=(r.credit||0);
+      if(r.s&&r.s.length){ for(const sr of r.s){ s._ss.add(tkey(r,sr)); } } else { s._ex+= (r.inv||0); }
+      let c=s.cats.get(r.cat);
+      if(!c){c={name:r.cat,qty:0,gross:0,net:0,models:new Map(),_ss:new Set(),_ex:0};s.cats.set(r.cat,c);}
+      c.qty+=r.qty;c.gross+=r.gross;c.net+=r.net;
+      if(r.s&&r.s.length){ for(const sr of r.s){ c._ss.add(tkey(r,sr)); } } else { c._ex+=(r.inv||0); }
+      let m=c.models.get(r.model);
+      if(!m){m={name:r.model,qty:0,gross:0,net:0,_ss:new Set(),_ex:0};c.models.set(r.model,m);}
+      m.qty+=r.qty;m.gross+=r.gross;m.net+=r.net;
+      if(r.s&&r.s.length){ for(const sr of r.s){ m._ss.add(tkey(r,sr)); } } else { m._ex+=(r.inv||0); }
+    }
+    out=[...map.values()].map(s=>{
+      const cats=[...s.cats.values()].map(c=>{
+        const mods=[...c.models.values()].map(m=>({name:m.name,qty:m.qty,inv:(m._ss.size+m._ex),gross:m.gross,net:m.net,disc:m.gross-m.net})).sort((x,y)=>y.net-x.net);
+        return {name:c.name,qty:c.qty,inv:(c._ss.size+c._ex),gross:c.gross,net:c.net,disc:c.gross-c.net,models:mods};
+      }).sort((x,y)=>y.net-x.net);
+      return {code:s.code,store:s.store,qty:s.qty,inv:(s._ss.size+s._ex),gross:s.gross,net:s.net,disc:s.gross-s.net,credit:s.credit,groups:cats,noDetail:false};
+    }).sort((x,y)=>y.net-x.net);
+  }
   out.forEach((r,i)=>r.id=i+1);
   return out;
 }
@@ -338,6 +396,7 @@ function renderHBoard(){
     const rank=i+1,h=hue(HDATA.indexOf(r));
     const cells=metric('تعداد فروش',fa(r.qty))+metric('تعداد فاکتور',fa(r.inv))+metric('ناخالص',fa(fmtM(r.gross)))+metric('خالص',fa(fmtM(r.net)),true)+metric('تخفیف',fa(fmtM(r.disc)))+metric('٪ تخفیف','٪'+fa(hval(r,'pct')));
     const glist=sortGroups(r.groups||[]);
+    const noDet=!!r.noDetail;
     const ghead=`<div class="grow ghead">`+GSORTS.map(s=>`<div><button class="${gsortKey===s.k?'on':''}" data-gk="${s.k}">${s.t}${gsortKey===s.k?(gsortDir===-1?' ▼':' ▲'):''}</button></div>`).join('')+`</div>`;
     const gitems=glist.map(g=>{
       const gk='H|'+r.code+'|'+g.name,isOpen=hOpenG.has(gk);
@@ -346,7 +405,8 @@ function renderHBoard(){
       const mrows=mlist.map(m=>{const kw='https://www.sergestyle.com/product?keyword='+encodeURIComponent(m.name);return `<div class="mrow"><div><b>${m.name}</b></div><div>${fa(m.qty)}</div><div>${fa(m.inv)}</div><div>${fa(fmtM(m.gross))}</div><div>${fa(fmtM(m.net))}</div><div>${fa(fmtM(m.disc))}</div><div>٪${fa(gpct(m))}</div><div><a class="pbtn" href="${kw}" target="_blank" rel="noopener">📷</a></div></div>`;}).join('');
       return `<div class="gitem${isOpen?' open':''}"><button class="grow" data-hgk="${gk.replace(/"/g,'')}"><div><b>${g.name} <span class="mini">▾</span></b></div><div>${fa(g.qty)}</div><div>${fa(g.inv)}</div><div>${fa(fmtM(g.gross))}</div><div>${fa(fmtM(g.net))}</div><div>${fa(fmtM(g.disc))}</div><div>٪${fa(gpct(g))}</div></button><div class="mwrap"><div class="mtable">${mhead}${mrows}</div></div></div>`;
     }).join('');
-    return `<div class="row${hOpenCode===r.code?' open':''}" style="--h:${h}"><button class="rowhead" data-hcode="${r.code}"><span class="rank ${rank<=3?'r'+rank:''}">${fa(rank)}</span><span class="storebox"><span class="store">${r.store}</span></span><span class="mgrid">${cells}</span><span class="chevwrap"><span class="chevlabel">کارگروه و کد مدل</span><span class="chev">▾</span></span></button><div class="drawer"><h3>📦 کارگروه ${r.store} <span class="tag">${u}</span></h3><div class="gwrap"><div class="gtable">${ghead}${gitems}</div></div></div></div>`;
+    const drawerInner=noDet?`<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">جزئیات کارگروه/مدل برای این بازه قدیمی ذخیره نشده — جمع فروشگاه کامل است.${DETAIL_FROM?` جزئیات از ${fmtD(DETAIL_FROM)} به بعد موجود است.`:''}</div>`:`<div class="gwrap"><div class="gtable">${ghead}${gitems}</div></div>`;
+    return `<div class="row${hOpenCode===r.code?' open':''}" style="--h:${h}"><button class="rowhead" data-hcode="${r.code}"><span class="rank ${rank<=3?'r'+rank:''}">${fa(rank)}</span><span class="storebox"><span class="store">${r.store}</span></span><span class="mgrid">${cells}</span><span class="chevwrap"><span class="chevlabel">${noDet?'جمع فروشگاه':'کارگروه و کد مدل'}</span><span class="chev">▾</span></span></button><div class="drawer"><h3>📦 کارگروه ${r.store} <span class="tag">${u}</span></h3>${drawerInner}</div></div>`;
   }).join('');
   el.querySelectorAll('.rowhead').forEach(b=>b.onclick=()=>{
     const c=b.dataset.hcode;hOpenCode=(hOpenCode===c?null:c);
@@ -366,7 +426,10 @@ function applyHistory(silent){
   hOpenCode=null;
   renderHTotals();renderHBoard();
   const n=$('#hrangeNote');
-  if(n){const q=HDATA.reduce((s,r)=>s+r.qty,0);n.innerHTML=`گزارش بازه <b>${fmtD(f)}</b> تا <b>${fmtD(t2)}</b> — <b>${fa(HDATA.length)}</b> فروشگاه، <b>${fa(q)}</b> قلم فروش`;markHChip();}
+  if(n){const q=HDATA.reduce((s,r)=>s+r.qty,0);
+    let extra='';
+    if(DETAIL_FROM&&cmpD(f,DETAIL_FROM)<0){extra=`<br><span style="font-size:11px;color:var(--muted)">⚠️ جزئیات کارگروه/مدل فقط از ${fmtD(DETAIL_FROM)} به بعد ذخیره شده — جمع فروشگاه‌ها برای کل بازه کامل است.</span>`;}
+    n.innerHTML=`گزارش بازه <b>${fmtD(f)}</b> تا <b>${fmtD(t2)}</b> — <b>${fa(HDATA.length)}</b> فروشگاه، <b>${fa(q)}</b> قلم فروش${extra}`;markHChip();}
 }
 
 /* ---------- مقایسه دو بازه ---------- */
@@ -375,12 +438,13 @@ function aggSimple(a,b){
   if(!a||!b)return new Map();
   if(cmpD(a,b)>0){const t=a;a=b;b=t;}
   const m=new Map();
-  for(const r of HROWS){
+  const src=(HDAILY&&HDAILY.length)?HDAILY:HROWS; // جمع روزانه دقیق برای کل تاریخ
+  for(const r of src){
     if(!inRange(r.d,a,b))continue;
     const k=r.code+'|'+r.store;
     let s=m.get(k);
     if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0};m.set(k,s);}
-    s.qty+=r.qty;s.inv+=r.inv;s.gross+=r.gross;s.net+=r.net;
+    s.qty+=r.qty;s.inv+=(r.inv||0);s.gross+=r.gross;s.net+=r.net;
   }
   return m;
 }
