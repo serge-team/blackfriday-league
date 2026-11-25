@@ -9,8 +9,8 @@
 @font-face{font-family:"Vazirmatn";src:url("fonts/Vazirmatn-Regular.ttf");font-weight:400}
 @font-face{font-family:"Vazirmatn";src:url("fonts/Vazirmatn-Bold.ttf");font-weight:700}
 :root{--r:14px;--gold:#F5B301}
-[data-theme="dark"]{--bg:#0B0D12;--card:#141924;--card2:#1A2230;--ink:#F2F4F8;--muted:#9AA3B5;--line:rgba(255,255,255,.10);--shadow:0 14px 30px rgba(0,0,0,.45);--chip:#1D2534;--drawer:rgba(255,255,255,.03)}
-[data-theme="light"]{--bg:#F3F1EA;--card:#FFFFFF;--card2:#FFFDF6;--ink:#14161B;--muted:#5D6574;--line:#E4DDCB;--shadow:0 12px 26px rgba(60,50,20,.12);--chip:#F3EEE1;--drawer:rgba(0,0,0,.03)}
+[data-theme="dark"]{--bg:#0B0D12;--card:#141924;--card2:#1A2230;--ink:#F2F4F8;--muted:#9AA3B5;--line:rgba(255,255,255,.10);--shadow:0 14px 30px rgba(0,0,0,.45);--chip:#1D2534;--drawer:rgba(255,255,255,.03);--nest:rgba(0,0,0,.22)}
+[data-theme="light"]{--bg:#F3F1EA;--card:#FFFFFF;--card2:#FFFDF6;--ink:#14161B;--muted:#5D6574;--line:#E4DDCB;--shadow:0 12px 26px rgba(60,50,20,.12);--chip:#F3EEE1;--drawer:rgba(0,0,0,.03);--nest:rgba(0,0,0,.045)}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;font-family:"Vazirmatn",system-ui;background:var(--bg);color:var(--ink);line-height:1.8;min-height:100vh}
@@ -25,15 +25,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .brand h1{margin:0;font-size:16px;line-height:1.4;white-space:nowrap}
 .brand p{margin:0;font-size:11px;color:var(--muted)}
 .actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.live{display:flex;align-items:center;gap:7px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;white-space:nowrap}
+.live{display:flex;flex-direction:column;align-items:center;gap:0;background:var(--chip);border:1px solid var(--line);border-radius:14px;padding:5px 14px 4px;line-height:1.7}
+.liverow{display:flex;align-items:center;gap:7px;font-size:12px;white-space:nowrap}
 .live i{width:9px;height:9px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulse 1.6s infinite}
 @keyframes pulse{70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.livedate{font-size:10.5px;color:var(--muted);white-space:nowrap}
 .btn{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:6px 13px;font-family:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
-.btn:focus-visible,.sbtn:focus-visible,.rowhead:focus-visible,.ghead button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn:focus-visible,.sbtn:focus-visible,.rowhead:focus-visible,.ghead button:focus-visible,.grow:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .sec{margin-top:10px}
 .sec h2{font-size:14.5px;margin:12px 2px 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tag{font-size:11px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:1px 10px;color:var(--muted);white-space:nowrap}
-/* خلاصه: همیشه 6 ستون در یک ردیف، فیت موبایل */
 .totals{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:4px 0 6px}
 .kpi{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:12px;padding:8px 4px 7px;box-shadow:var(--shadow);position:relative;text-align:center;min-width:0;overflow:visible}
 .kpi::after{content:"";position:absolute;top:-1px;right:8px;left:8px;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,hsl(var(--h,45) 85% 55%),transparent)}
@@ -70,15 +71,28 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 .drawer{display:none;border-top:1px dashed var(--line);padding:9px 8px 11px;background:var(--drawer)}
 .row.open .drawer{display:block}
 .drawer h3{margin:0 0 8px;font-size:12.5px;display:flex;align-items:center;gap:7px;justify-content:center;flex-wrap:wrap}
+.hint{font-size:10.5px;color:var(--muted);text-align:center;margin:0 0 8px}
 .gwrap{border-radius:10px}
 .gtable{min-width:0;display:flex;flex-direction:column;gap:4px}
-.grow{display:grid;grid-template-columns:1.2fr repeat(6,minmax(0,1fr));gap:4px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 3px;font-size:11px;text-align:center}
-.grow.ghead{background:none;border:0;color:var(--muted);font-size:10px;padding:0 3px;gap:3px}
+.gitem{display:flex;flex-direction:column;gap:0}
+.grow{display:grid;grid-template-columns:1.2fr repeat(6,minmax(0,1fr));gap:4px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 3px;font-size:11px;text-align:center;font-family:inherit;color:var(--ink);width:100%}button.grow{cursor:pointer}
+.gitem.open>button.grow{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.grow.ghead{background:none;border:0;color:var(--muted);font-size:10px;padding:0 3px;gap:3px;cursor:default}
 .grow b{font-size:11px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
 .grow div{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
 .ghead button{background:none;border:0;color:inherit;font-family:inherit;font-size:inherit;cursor:pointer;white-space:nowrap;padding:2px 1px;border-radius:6px}
 .ghead button.on{color:var(--ink);font-weight:700;background:var(--chip)}
+.mini{font-size:9px;color:var(--muted)}
+.gitem.open .mini{transform:rotate(180deg);display:inline-block}
 @media(max-width:640px){.grow{font-size:10px;padding:4px 1px;gap:3px}.grow b{font-size:10px}.grow.ghead{font-size:8px}}
+.mwrap{display:none;padding:5px 2px 7px}
+.gitem.open .mwrap{display:block}
+.mtable{display:flex;flex-direction:column;gap:3px;background:var(--nest);border:1px dashed var(--line);border-radius:8px;padding:6px 5px}
+.mrow{display:grid;grid-template-columns:1.2fr repeat(6,minmax(0,1fr));gap:4px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:4px 3px;font-size:10.5px;text-align:center}
+.mrow.mhead{background:none;border:0;color:var(--muted);font-size:9px;padding:0 3px}
+.mrow b{font-size:10.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mrow div{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+@media(max-width:640px){.mrow{font-size:9px;padding:3px 1px;gap:3px}.mrow b{font-size:9px}.mrow.mhead{font-size:7.5px}}
 .foot{margin:22px 0 6px;text-align:center;font-size:10.5px;letter-spacing:.4px;color:var(--muted)}
 .foot b{background:linear-gradient(90deg,#8a6400,#c99600,#8a6400);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700;letter-spacing:1px}
 @media(prefers-reduced-motion:reduce){.live i,.logoBox::after{animation:none}}
@@ -87,7 +101,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 <body><div class="wrap">
 <div class="top">
 <div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span><div><h1>لیگ بلک‌فرایدی سرژه</h1><p>جدول زنده فروشگاه‌ها</p></div></div>
-<div class="actions"><span class="live"><i></i>زنده <b id="clock">--:--</b></span><button class="btn" id="unitBtn">میلیون ریال</button><button class="btn" id="themeBtn">🌙 تاریک</button></div>
+<div class="actions"><span class="live"><span class="liverow"><i></i>زنده <b id="clock">--:--</b></span><span class="livedate" id="livedate"></span></span><button class="btn" id="unitBtn">میلیون تومان ⇄</button><button class="btn" id="themeBtn">🌙 تاریک</button></div>
 </div>
 <div class="sec"><h2>📊 خلاصه فروش فروشگاه‌های سرژه</h2><div class="totals" id="totals"></div></div>
 <div class="sec"><h2>📊 جدول لیگ — فروشگاه‌ها <span class="tag" id="countLine"></span> <span class="tag" id="unitLine"></span></h2>
