@@ -1710,4 +1710,501 @@
     ]
    }
   ]
- 
+ },
+ {
+  "id": 7,
+  "code": "10011",
+  "store": "سرژه لاله پارک",
+  "qty": 8,
+  "inv": 5,
+  "gross": 368230000,
+  "net": 315390000,
+  "disc": 52840000,
+  "groups": [
+   {
+    "name": "تاپ",
+    "qty": 3,
+    "inv": 3,
+    "gross": 111680000,
+    "net": 96043637,
+    "disc": 15636363,
+    "models": [
+     {
+      "name": "202724",
+      "qty": 1,
+      "inv": 1,
+      "gross": 59890000,
+      "net": 46045802,
+      "disc": 13844198,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=202724",
+      "variants": []
+     },
+     {
+      "name": "202721",
+      "qty": 1,
+      "inv": 1,
+      "gross": 33900000,
+      "net": 33897835,
+      "disc": 2165,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=202721",
+      "variants": []
+     },
+     {
+      "name": "202675",
+      "qty": 1,
+      "inv": 1,
+      "gross": 17890000,
+      "net": 16100000,
+      "disc": 1790000,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=202675",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "بلوز",
+    "qty": 2,
+    "inv": 2,
+    "gross": 109780000,
+    "net": 93624198,
+    "disc": 16155802,
+    "models": [
+     {
+      "name": "243158",
+      "qty": 1,
+      "inv": 1,
+      "gross": 69890000,
+      "net": 53734198,
+      "disc": 16155802,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=243158",
+      "variants": []
+     },
+     {
+      "name": "243148",
+      "qty": 1,
+      "inv": 1,
+      "gross": 39890000,
+      "net": 39890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=243148",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "شلوار",
+    "qty": 1,
+    "inv": 1,
+    "gross": 79990000,
+    "net": 79990000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "208484",
+      "qty": 1,
+      "inv": 1,
+      "gross": 79990000,
+      "net": 79990000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=208484",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "سارافون",
+    "qty": 1,
+    "inv": 1,
+    "gross": 47890000,
+    "net": 28732165,
+    "disc": 19157835,
+    "models": [
+     {
+      "name": "205497",
+      "qty": 1,
+      "inv": 1,
+      "gross": 47890000,
+      "net": 28732165,
+      "disc": 19157835,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=205497",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "تيشرت",
+    "qty": 1,
+    "inv": 1,
+    "gross": 18890000,
+    "net": 17000000,
+    "disc": 1890000,
+    "models": [
+     {
+      "name": "244104",
+      "qty": 1,
+      "inv": 1,
+      "gross": 18890000,
+      "net": 17000000,
+      "disc": 1890000,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=244104",
+      "variants": []
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": 8,
+  "code": "10003",
+  "store": "سرژه سانا",
+  "qty": 7,
+  "inv": 6,
+  "gross": 217230000,
+  "net": 177190000,
+  "disc": 40040000,
+  "groups": [
+   {
+    "name": "بلوز",
+    "qty": 4,
+    "inv": 4,
+    "gross": 190560000,
+    "net": 156465346,
+    "disc": 34094654,
+    "models": [
+     {
+      "name": "243159",
+      "qty": 1,
+      "inv": 1,
+      "gross": 79890000,
+      "net": 79885346,
+      "disc": 4654,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=243159",
+      "variants": []
+     },
+     {
+      "name": "243161",
+      "qty": 2,
+      "inv": 1,
+      "gross": 109780000,
+      "net": 79780000,
+      "disc": 30000000,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=243161",
+      "variants": []
+     },
+     {
+      "name": "243148",
+      "qty": 1,
+      "inv": 1,
+      "gross": 39890000,
+      "net": 39890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=243148",
+      "variants": []
+     },
+     {
+      "name": "204684",
+      "qty": 1,
+      "inv": 1,
+      "gross": 40890000,
+      "net": 36800000,
+      "disc": 4090000,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=204684",
+      "variants": []
+     },
+     {
+      "name": "244148",
+      "qty": -1,
+      "inv": 0,
+      "gross": -79890000,
+      "net": -79890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=244148",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "تاپ",
+    "qty": 1,
+    "inv": 1,
+    "gross": 39890000,
+    "net": 39890000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "203638",
+      "qty": 1,
+      "inv": 1,
+      "gross": 39890000,
+      "net": 39890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=203638",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "هدبند",
+    "qty": 2,
+    "inv": 1,
+    "gross": 9780000,
+    "net": 9780000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "257101",
+      "qty": 2,
+      "inv": 1,
+      "gross": 9780000,
+      "net": 9780000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=257101",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "شال",
+    "qty": 1,
+    "inv": 1,
+    "gross": 11890000,
+    "net": 5944654,
+    "disc": 5945346,
+    "models": [
+     {
+      "name": "240368",
+      "qty": 1,
+      "inv": 1,
+      "gross": 11890000,
+      "net": 5944654,
+      "disc": 5945346,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=240368",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "تيشرت",
+    "qty": -1,
+    "inv": 0,
+    "gross": -34890000,
+    "net": -34890000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "203635",
+      "qty": -1,
+      "inv": 0,
+      "gross": -34890000,
+      "net": -34890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=203635",
+      "variants": []
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": 9,
+  "code": "10013",
+  "store": "سرژه شيرازمال",
+  "qty": 5,
+  "inv": 2,
+  "gross": 136460000,
+  "net": 136460000,
+  "disc": 0,
+  "groups": [
+   {
+    "name": "جليقه",
+    "qty": 1,
+    "inv": 1,
+    "gross": 69900000,
+    "net": 69900000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "234136",
+      "qty": 1,
+      "inv": 1,
+      "gross": 69900000,
+      "net": 69900000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=234136",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "بلوز",
+    "qty": 2,
+    "inv": 2,
+    "gross": 59780000,
+    "net": 59780000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "243149",
+      "qty": 1,
+      "inv": 1,
+      "gross": 29890000,
+      "net": 29890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=243149",
+      "variants": []
+     },
+     {
+      "name": "243147",
+      "qty": 1,
+      "inv": 1,
+      "gross": 29890000,
+      "net": 29890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=243147",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "هدبند",
+    "qty": 1,
+    "inv": 1,
+    "gross": 4890000,
+    "net": 4890000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "257103",
+      "qty": 1,
+      "inv": 1,
+      "gross": 4890000,
+      "net": 4890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=257103",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "جوراب",
+    "qty": 1,
+    "inv": 1,
+    "gross": 1890000,
+    "net": 1890000,
+    "disc": 0,
+    "models": [
+     {
+      "name": "255159",
+      "qty": 1,
+      "inv": 1,
+      "gross": 1890000,
+      "net": 1890000,
+      "disc": 0,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=255159",
+      "variants": []
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": 10,
+  "code": "12209",
+  "store": "سرژه نيايش مال",
+  "qty": 2,
+  "inv": 2,
+  "gross": 78780000,
+  "net": 70900000,
+  "disc": 7880000,
+  "groups": [
+   {
+    "name": "بلوز",
+    "qty": 1,
+    "inv": 1,
+    "gross": 40890000,
+    "net": 36800000,
+    "disc": 4090000,
+    "models": [
+     {
+      "name": "204684",
+      "qty": 1,
+      "inv": 1,
+      "gross": 40890000,
+      "net": 36800000,
+      "disc": 4090000,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=204684",
+      "variants": []
+     }
+    ]
+   },
+   {
+    "name": "شلوار",
+    "qty": 1,
+    "inv": 1,
+    "gross": 37890000,
+    "net": 34100000,
+    "disc": 3790000,
+    "models": [
+     {
+      "name": "2086972",
+      "qty": 1,
+      "inv": 1,
+      "gross": 37890000,
+      "net": 34100000,
+      "disc": 3790000,
+      "img": "",
+      "thumb": "",
+      "href": "https://www.sergestyle.com/product?keyword=2086972",
+      "variants": []
+     }
+    ]
+   }
+  ]
+ }
+]
