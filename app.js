@@ -49,14 +49,17 @@ function setUnit(u){unit=u;try{localStorage.setItem('bf-unit',u);}catch(e){}
 function renderTotals(){
  const q=DATA.reduce((s,r)=>s+r.qty,0),iv=DATA.reduce((s,r)=>s+r.inv,0);
  const g=DATA.reduce((s,r)=>s+r.gross,0),n=DATA.reduce((s,r)=>s+r.net,0),dd=g-n;
+ const cr=DATA.reduce((s,r)=>s+(Number(r.credit)||0),0);
  const p=g?Math.round(dd/g*100):0, u=unitLabel();
+ const shr=n?Math.round(cr/n*100):0;
  const items=[
   {h:45,l:'تعداد فروش',v:fa(q),u:'قلم'},
   {h:205,l:'تعداد فاکتور',v:fa(iv),u:'فاکتور'},
   {h:160,l:'ناخالص',v:fa(fmtM(g)),u:u},
   {h:285,l:'خالص',v:fa(fmtM(n)),u:u},
   {h:5,l:'تخفیف',v:fa(fmtM(dd)),u:u},
-  {h:30,l:'٪ تخفیف',v:'٪'+fa(p),u:'میانگین'}
+  {h:30,l:'٪ تخفیف',v:'٪'+fa(p),u:'میانگین'},
+  {h:200,l:'فروش اعتباری',v:fa(fmtM(cr)),u:'٪'+fa(shr)+' از خالص'}
  ];
  $('#totals').innerHTML=items.map(o=>`<div class="kpi" style="--h:${o.h}"><small>${o.l}</small><b>${o.v}</b><span>${o.u}</span></div>`).join('');
  $('#countLine').textContent=fa(DATA.length)+' فروشگاه';
