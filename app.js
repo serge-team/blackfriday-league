@@ -33,13 +33,28 @@ function sortModels(list){
  return a;
 }
 let LAST_UPDATE=null;
+let LEAGUE_DATE='';
 async function fetchData(){
  try{
   const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});
   const lm=r.headers.get('last-modified');
   const j=await r.json();
   if(Array.isArray(j)){ DATA=j; LAST_UPDATE=lm?new Date(lm):null; }
-  else{ DATA=(j.stores||j.data||[]); if(j.updated_at){ LAST_UPDATE=new Date(j.updated_at); } else if(lm){ LAST_UPDATE=new Date(lm); } }
+  else{
+   DATA=(j.stores||j.data||[]);
+   if(j.updated_at){ LAST_UPDATE=new Date(j.updated_at); } else if(lm){ LAST_UPDATE=new Date(lm); }
+   // تک‌فایل: تاریخچه داخل همان data.json است
+   try{
+    if(j.rows&&j.rows.length){
+     HROWS=j.rows.map(x=>({...x,d:normD(x.d)}));
+     HDATES=[...((j.dates&&j.dates.length?j.dates:j.rows.map(x=>x.d)))].map(normD).filter(Boolean);
+     HDATES=[...new Set(HDATES)].sort();
+     LEAGUE_DATE=normD(j.league_date||j.max_date||HDATES[HDATES.length-1]||'');
+    } else if(j.min_date&&j.max_date){
+     HDATES=[]; LEAGUE_DATE=normD(j.league_date||j.max_date||'');
+    }
+   }catch(e){}
+  }
  }catch(e){}
  DATA.forEach(r=>{r.disc=(r.gross-r.net);(r.groups||[]).forEach(g=>{g.disc=g.gross-g.net;(g.models||[]).forEach(m=>{m.disc=m.gross-m.net;});});});
 }
@@ -74,7 +89,7 @@ function renderTotals(){
   {h:200,l:'فروش اعتباری',v:fa(fmtM(cr)),u:'٪'+fa(shr)+' از خالص'}
  ];
  $('#totals').innerHTML=items.map(o=>`<div class="kpi" style="--h:${o.h}"><small>${o.l}</small><b>${o.v}</b><span>${o.u}</span></div>`).join('');
- $('#countLine').textContent=fa(DATA.length)+' فروشگاه';
+ { const lc=$('#countLine'); if(lc) lc.textContent=fa(DATA.length)+' فروشگاه'+(LEAGUE_DATE?' • '+fmtD(LEAGUE_DATE):''); }
  const ul=$('#unitLine'); if(ul) ul.textContent=u;
 }
 function metric(label,v,hot){return `<div class="m${hot?' hot':''}"><small>${label}</small><b>${v}</b></div>`;}
@@ -261,25 +276,29 @@ function aggRange(a,b){
   if(!a||!b)return [];
   if(cmpD(a,b)>0){const t=a;a=b;b=t;}
   const map=new Map();
+  const tkey=(r,sr)=>r.d+'|'+r.code+'-'+sr;
   for(const r of HROWS){
     if(!inRange(r.d,a,b))continue;
     const k=r.code+'|'+r.store;
     let s=map.get(k);
-    if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0,cats:new Map()};map.set(k,s);}
-    s.qty+=r.qty;s.inv+=r.inv;s.gross+=r.gross;s.net+=r.net;s.credit+=(r.credit||0);
+    if(!s){s={code:r.code,store:r.store,qty:0,inv:0,gross:0,net:0,credit:0,cats:new Map(),_ss:new Set(),_ex:0};map.set(k,s);}
+    s.qty+=r.qty;s.gross+=r.gross;s.net+=r.net;s.credit+=(r.credit||0);
+    if(r.s&&r.s.length){ for(const sr of r.s){ s._ss.add(tkey(r,sr)); } } else { s._ex+= (r.inv||0); }
     let c=s.cats.get(r.cat);
-    if(!c){c={name:r.cat,qty:0,inv:0,gross:0,net:0,serials:0,models:new Map()};s.cats.set(r.cat,c);}
-    c.qty+=r.qty;c.inv+=r.inv;c.gross+=r.gross;c.net+=r.net;
+    if(!c){c={name:r.cat,qty:0,inv:0,gross:0,net:0,serials:0,models:new Map(),_ss:new Set(),_ex:0};s.cats.set(r.cat,c);}
+    c.qty+=r.qty;c.gross+=r.gross;c.net+=r.net;
+    if(r.s&&r.s.length){ for(const sr of r.s){ c._ss.add(tkey(r,sr)); } } else { c._ex+=(r.inv||0); }
     let m=c.models.get(r.model);
-    if(!m){m={name:r.model,qty:0,inv:0,gross:0,net:0};c.models.set(r.model,m);}
-    m.qty+=r.qty;m.inv+=r.inv;m.gross+=r.gross;m.net+=r.net;
+    if(!m){m={name:r.model,qty:0,inv:0,gross:0,net:0,_ss:new Set(),_ex:0};c.models.set(r.model,m);}
+    m.qty+=r.qty;m.gross+=r.gross;m.net+=r.net;
+    if(r.s&&r.s.length){ for(const sr of r.s){ m._ss.add(tkey(r,sr)); } } else { m._ex+=(r.inv||0); }
   }
   const out=[...map.values()].map(s=>{
     const cats=[...s.cats.values()].map(c=>{
-      const mods=[...c.models.values()].map(m=>({...m,disc:m.gross-m.net})).sort((x,y)=>y.net-x.net);
-      return {name:c.name,qty:c.qty,inv:c.inv,gross:c.gross,net:c.net,disc:c.gross-c.net,models:mods};
+      const mods=[...c.models.values()].map(m=>({name:m.name,qty:m.qty,inv:(m._ss.size+m._ex),gross:m.gross,net:m.net,disc:m.gross-m.net})).sort((x,y)=>y.net-x.net);
+      return {name:c.name,qty:c.qty,inv:(c._ss.size+c._ex),gross:c.gross,net:c.net,disc:c.gross-c.net,models:mods};
     }).sort((x,y)=>y.net-x.net);
-    return {code:s.code,store:s.store,qty:s.qty,inv:s.inv,gross:s.gross,net:s.net,disc:s.gross-s.net,credit:s.credit,groups:cats};
+    return {code:s.code,store:s.store,qty:s.qty,inv:(s._ss.size+s._ex),gross:s.gross,net:s.net,disc:s.gross-s.net,credit:s.credit,groups:cats};
   }).sort((x,y)=>y.net-x.net);
   out.forEach((r,i)=>r.id=i+1);
   return out;
@@ -449,13 +468,15 @@ function buildChips(){
 /* ---------- بوت ---------- */
 function syncUnitLines(){const u=unitLabel();const a=$('#unitLine');if(a)a.textContent=u;const b=$('#hunitLine');if(b)b.textContent=u;const c=$('#cunitLine');if(c)c.textContent=u;}
 async function fetchHistory(){
+  if(HROWS&&HROWS.length&&HDATES&&HDATES.length) return; // از تک‌فایل خوانده شده
   try{
     const r=await fetch('history.json?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok) return;
     const j=await r.json();
     HROWS=(j.rows||[]).map(x=>({...x,d:normD(x.d)}));
     HDATES=[...(j.dates||[])].map(normD).filter(Boolean).sort();
     if(!HDATES.length)HDATES=[...new Set(HROWS.map(x=>x.d))].sort();
-  }catch(e){HROWS=[];HDATES=[];}
+  }catch(e){ if(!HROWS.length){HROWS=[];HDATES=[];} }
 }
 function refreshHistoryLive(){/* تاریخ‌ها ثابت می‌مانند؛ فقط اگر داده تازه آمد بازخوانی کن */ }
 function bootTabs(){
@@ -481,7 +502,7 @@ function bootTabs(){
       if(!HDATA.length&&n)n.innerHTML='در این بازه فروشی ثبت نشده است.';
     } else {
       const n=$('#hrangeNote');
-      if(n)n.innerHTML=HDATES.length?`بازه موجود: <b>${fmtD(mn)}</b> تا <b>${fmtD(mx)}</b> — «نمایش گزارش بازه» را بزنید.`:'فایل history.json پیدا نشد.';
+      if(n)n.innerHTML=HDATES.length?`بازه موجود: <b>${fmtD(mn)}</b> تا <b>${fmtD(mx)}</b> — «نمایش گزارش بازه» را بزنید.`:'فایل data.json پیدا نشد.';
     }
     // compare defaults
     let af='',at2='',bf2='',bt='';
