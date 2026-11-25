@@ -32,16 +32,24 @@ function sortModels(list){
  else{ a.sort((x,y)=> (gval(x,gsortKey)-gval(y,gsortKey))*d); }
  return a;
 }
+let LAST_UPDATE=null;
 async function fetchData(){
- try{const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});DATA=await r.json();}catch(e){}
+ try{
+  const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});
+  const lm=r.headers.get('last-modified');
+  const j=await r.json();
+  if(Array.isArray(j)){ DATA=j; LAST_UPDATE=lm?new Date(lm):null; }
+  else{ DATA=(j.stores||j.data||[]); if(j.updated_at){ LAST_UPDATE=new Date(j.updated_at); } else if(lm){ LAST_UPDATE=new Date(lm); } }
+ }catch(e){}
  DATA.forEach(r=>{r.disc=(r.gross-r.net);(r.groups||[]).forEach(g=>{g.disc=g.gross-g.net;(g.models||[]).forEach(m=>{m.disc=m.gross-m.net;});});});
 }
-function tickClock(){
- const d=new Date();
- const c=$('#clock'); if(c) c.textContent=d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
+function renderUpdateTime(){
+ const d=(LAST_UPDATE&&!isNaN(LAST_UPDATE))?LAST_UPDATE:new Date();
+ const c=$('#clock'); if(c) c.textContent=d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Tehran'});
  const ld=$('#livedate');
- if(ld){ try{ ld.textContent=d.toLocaleDateString('fa-IR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }catch(e){} }
+ if(ld){ try{ ld.textContent=d.toLocaleDateString('fa-IR',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Tehran'}); }catch(e){} }
 }
+const tickClock=renderUpdateTime;
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('bf-theme',t);}catch(e){}
  const b=$('#themeBtn');if(b)b.textContent=(t==='dark'?'🌙 تاریک':'☀️ روشن');}
 function setUnit(u){unit=u;try{localStorage.setItem('bf-unit',u);}catch(e){}
@@ -148,8 +156,7 @@ async function load(){
  $('#themeBtn').onclick=()=>{setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');};
  $('#unitBtn').onclick=()=>{setUnit(unit==='rial'?'toman':'rial');};
  await fetchData();
- renderTotals();renderBoard();
- setInterval(async()=>{await fetchData();renderTotals();renderBoard();},60000);
- tickClock(); setInterval(tickClock,10000);
+ renderTotals();renderBoard();renderUpdateTime();
+ setInterval(async()=>{await fetchData();renderTotals();renderBoard();renderUpdateTime();},60000);
 }
 load();
