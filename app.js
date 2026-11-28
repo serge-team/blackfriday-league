@@ -142,7 +142,7 @@ function renderTotals(){
   {h:200,l:'فروش اعتباری',v:fa(fmtM(cr)),u:'٪'+fa(shr)+' از خالص'}
  ];
  $('#totals').innerHTML=items.map(o=>`<div class="kpi" style="--h:${o.h}"><small>${o.l}</small><b>${o.v}</b><span>${o.u}</span></div>`).join('');
- { const lc=$('#countLine'); if(lc) lc.textContent=fa(DATA.length)+' فروشگاه'+(LEAGUE_DATE?' • '+fmtD(LEAGUE_DATE):''); }
+ { const lc=$('#countLine'); if(lc) lc.textContent=fa(DATA.length)+' فروشگاه'; }
  const ul=$('#unitLine'); if(ul) ul.textContent=u;
 }
 function metric(label,v,hot){return `<div class="m${hot?' hot':''}"><small>${label}</small><b>${v}</b></div>`;}
@@ -230,7 +230,7 @@ async function load(){
  await fetchData();
  renderTotals();renderBoard();renderUpdateTime();
  try{ if(typeof bootTabs==='function') bootTabs(); }catch(e){ console.warn(e); }
- setInterval(async()=>{await fetchData();renderTotals();renderBoard();renderUpdateTime();try{if(typeof refreshHistoryLive==='function')refreshHistoryLive();}catch(e){}},60000);
+ setInterval(async()=>{await fetchData();try{if(L_FROM&&L_TO&&typeof applyLeague==='function'){applyLeague(true);}else{renderTotals();renderBoard();}}catch(e){renderTotals();renderBoard();}renderUpdateTime();try{if(typeof refreshHistoryLive==='function')refreshHistoryLive();}catch(e){}},60000);
 }
 load();
 
@@ -238,6 +238,7 @@ load();
 let HROWS=[], HDATES=[], HDATA=[], HDAILY=[], DETAIL_FROM='', DETAIL_DAYS=45;
 let H_FROM='', H_TO='', hsortKey='net', hsortDir=-1, hOpenCode=null, hOpenG=new Set();
 let H_SEL=new Set(), H_BUILT=false, H_UI=false;
+let L_FROM='', L_TO='';
 let CAL_FOR=null, CAL_Y=1405, CAL_M=9;
 const FA_D='۰۱۲۳۴۵۶۷۸۹';
 const en2fa=s=>String(s).replace(/[0-9]/g,d=>FA_D[d]);
@@ -261,7 +262,6 @@ function todayJal(){try{const n=new Date(new Date().toLocaleString('en-US',{time
 function parseJ(s){s=fa2en(s);const p=s.split('/');return [parseInt(p[0]||'1405'),parseInt(p[1]||'1'),parseInt(p[2]||'1')];}
 function fmtD(s){return en2fa(s);}
 function jWeekday(jy,jm,jd){const[gy,gm,gd]=jal2greg(jy,jm,jd);const dt=new Date(Date.UTC(gy,gm-1,gd));const w=dt.getUTCDay();return (w+1)%7;}
-const TAB_NAMES={League:'🏆 لیگ بلک‌فرایدی',History:'🗓️ سابقه فروش',Compare:'⚖️ مقایسه دو بازه'};
 function switchTab(which){
   ['League','History','Compare'].forEach(k=>{
     const sec=$('#sec'+k), tab=$('#tab'+k);
@@ -269,7 +269,6 @@ function switchTab(which){
     if(sec)sec.classList.toggle('hid',!on);
     if(tab)tab.classList.toggle('on',on);
   });
-  const cn=$('#curTabName'); if(cn&&TAB_NAMES[which])cn.textContent=TAB_NAMES[which];
   try{localStorage.setItem('bf-tab',which);}catch(e){}
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -301,7 +300,6 @@ function renderCal(){
   for(let d=1;d<=dim;d++){
     const ds=`${CAL_Y}/${String(CAL_M).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
     const cls=['cday'];if(ds===sel)cls.push('sel');if(ds===tStr)cls.push('today');
-    if(HDATES.length&& (cmpD(ds,HDATES[0])<0||cmpD(ds,HDATES[HDATES.length-1])>0))cls.push('dis');
     g.innerHTML+=`<button class="${cls.join(' ')}" data-d="${ds}">${en2fa(d)}</button>`;
   }
   g.querySelectorAll('.cday').forEach(b=>b.onclick=()=>{
@@ -311,7 +309,7 @@ function renderCal(){
   });
 }
 function bindDateInputs(){
-  ['hFrom','hTo','cAFrom','cATo','cBFrom','cBTo'].forEach(id=>{
+  ['lFrom','lTo','hFrom','hTo','cAFrom','cATo','cBFrom','cBTo'].forEach(id=>{
     const el=document.getElementById(id);if(!el||el.dataset.bound)return;el.dataset.bound='1';
     el.addEventListener('click',e=>{e.stopPropagation();openCal(id);});
   });
@@ -333,7 +331,9 @@ function aggRange(a,b,sel){
   const useDaily=(HDAILY&&HDAILY.length)?true:false;
   // جمع فروشگاهی دقیق از daily (کل تاریخ) + جزئیات کارگروه/مدل از rows (روزهای اخیر)
   const smap=new Map();
-  const hsel=(sel&&sel.size)?sel:(typeof H_SEL!=='undefined'&&H_SEL&&H_SEL.size?H_SEL:null);
+  let hsel=null;
+  if(typeof sel!=='undefined'&&sel!==null){hsel=(sel&&sel.size)?sel:null;}
+  else{hsel=(typeof H_SEL!=='undefined'&&H_SEL&&H_SEL.size?H_SEL:null);}
   if(useDaily){
     for(const r of HDAILY){
       if(!inRange(r.d,a,b))continue;
@@ -474,6 +474,23 @@ function applyHistory(silent){
     let extra='';
     if(DETAIL_FROM&&cmpD(f,DETAIL_FROM)<0){extra=`<br><span style="font-size:11px;color:var(--muted)">⚠️ جزئیات کارگروه/مدل فقط از ${fmtD(DETAIL_FROM)} به بعد ذخیره شده — جمع فروشگاه‌ها برای کل بازه کامل است.</span>`;}
     n.innerHTML=`گزارش بازه <b>${fmtD(f)}</b> تا <b>${fmtD(t2)}</b> — <b>${fa(HDATA.length)}</b> فروشگاه، <b>${fa(q)}</b> قلم فروش${extra}`;markHChip();}
+}
+
+/* ---------- لیگ بلک‌فرایدی: گزارش بازه ---------- */
+function applyLeague(silent){
+  const fEl=$('#lFrom'), tEl=$('#lTo');
+  const f=fEl?normD(fa2en(fEl.value)):'', t2=tEl?normD(fa2en(tEl.value)):'';
+  const n=$('#lrangeNote');
+  if(!f||!t2){if(!silent&&n)n.innerHTML='⚠️ هر دو تاریخ را انتخاب کنید.';return;}
+  L_FROM=f; L_TO=t2;
+  try{localStorage.setItem('bf-lFrom',en2fa(f));localStorage.setItem('bf-lTo',en2fa(t2));}catch(e){}
+  let data=[];
+  try{data=aggRange(f,t2,null);}catch(e){data=[];}
+  DATA=data;
+  openCode=null;
+  try{if(typeof openG!=='undefined'&&openG)openG.clear();}catch(e){}
+  renderTotals();renderBoard();
+  if(n)n.innerHTML='';
 }
 
 /* ---------- سابقه: انتخاب فروشگاه ---------- */
@@ -829,6 +846,14 @@ function bootTabs(){
     let hf='',ht='';
     try{hf=localStorage.getItem('bf-hFrom')||'';ht=localStorage.getItem('bf-hTo')||'';}catch(e){}
     const mx=HDATES.length?HDATES[HDATES.length-1]:'',mn=HDATES.length?HDATES[0]:'';
+    try{
+      let lf='',lt='';
+      try{lf=localStorage.getItem('bf-lFrom')||'';lt=localStorage.getItem('bf-lTo')||'';}catch(e){}
+      L_FROM=lf?normD(fa2en(lf)):'1405/09/05';L_TO=lt?normD(fa2en(lt)):'1405/09/06';
+      if($('#lFrom'))$('#lFrom').value=L_FROM?en2fa(L_FROM):'';
+      if($('#lTo'))$('#lTo').value=L_TO?en2fa(L_TO):'';
+      if(L_FROM&&L_TO)applyLeague(true);
+    }catch(e){}
     H_FROM=hf?normD(fa2en(hf)):mx;H_TO=ht?normD(fa2en(ht)):mx;
     if(!H_FROM)H_FROM=mx;if(!H_TO)H_TO=mx;
     if($('#hFrom'))$('#hFrom').value=H_FROM?en2fa(H_FROM):'';
@@ -856,6 +881,7 @@ function bootTabs(){
     if(HROWS.length&&C_AFROM&&C_ATO&&C_BFROM&&C_BTO){try{applyCompare();}catch(e){}}
     else{const n=$('#crangeNote');if(n)n.innerHTML='';}    syncUnitLines();
   });
+  const la=$('#lApply');if(la)la.onclick=()=>applyLeague(false);
   const ha=$('#hApply');if(ha)ha.onclick=()=>applyHistory(false);
   const ca=$('#cApply');if(ca)ca.onclick=()=>applyCompare();
 }

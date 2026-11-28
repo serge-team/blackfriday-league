@@ -103,7 +103,6 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 
 /* ---- tabs: modern 3D ---- */
 .tabs{display:flex;gap:8px;margin:12px 2px 6px;background:transparent;border:0;padding:0;position:static}
-.curtab{font-size:11px;font-weight:900;color:var(--gold);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:1px 14px;margin-top:2px;white-space:nowrap}
 .tab{flex:1;position:relative;border:1px solid var(--line);font-family:inherit;font-size:13px;font-weight:900;padding:10px 2px 13px;border-radius:14px;cursor:pointer;white-space:nowrap;color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.22),0 10px 22px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .12s ease,box-shadow .12s ease}
 #tabLeague{background:linear-gradient(180deg,rgba(245,179,1,.30),rgba(245,179,1,.10));border-color:rgba(201,150,0,.55)}
 #tabHistory{background:linear-gradient(180deg,rgba(56,189,248,.28),rgba(56,189,248,.09));border-color:rgba(56,189,248,.50)}
@@ -187,7 +186,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 </style></head>
 <body><div class="wrap">
 <div class="top">
-<div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span><div><h1>لیگ بلک‌فرایدی سرژه</h1></div><div class="curtab" id="curTabName">🏆 لیگ بلک‌فرایدی</div></div>
+<div class="brand"><span class="logoBox"><img src="logo.svg" alt="SERGE"></span></div>
 <div class="actions"><span class="live"><span class="liverow"><i></i>آپدیت: <b id="clock">--:--</b></span><span class="livedate" id="livedate"></span></span><button class="btn" id="unitBtn">میلیون تومان ⇄</button><button class="btn" id="themeBtn">🌙 تاریک</button></div>
 </div>
 <div class="tabs" role="tablist">
@@ -196,7 +195,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background:ra
 <button class="tab" id="tabCompare" role="tab">⚖️ مقایسه دو بازه</button>
 </div>
 <section id="secLeague">
-<div class="sec"><h2>📊 خلاصه فروش فروشگاه‌های سرژه</h2><div class="totals" id="totals"></div></div>
+<div class="sec"><h2>📊 خلاصه فروش فروشگاه‌های سرژه</h2>
+<div class="fcard">
+<div class="frow">
+<div class="fld"><label>از تاریخ</label><input class="dinput" id="lFrom" readonly placeholder="انتخاب کنید"></div>
+<div class="fld"><label>تا تاریخ</label><input class="dinput" id="lTo" readonly placeholder="انتخاب کنید"></div>
+</div>
+<button class="abtn" id="lApply">نمایش گزارش بازه ✔</button>
+<div class="rnote" id="lrangeNote"></div>
+</div>
+<div class="totals" id="totals"></div></div>
 <div class="sec"><h2>📊 جدول لیگ — فروشگاه‌ها <span class="tag" id="countLine"></span> <span class="tag" id="unitLine"></span></h2>
 <div class="toolbar"><div class="sortlabel">سورت بر اساس:</div><div class="sortbar" id="sortbar"></div></div>
 <div class="head" id="headRow"></div>
